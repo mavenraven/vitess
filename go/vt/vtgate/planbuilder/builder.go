@@ -340,12 +340,10 @@ func createInstructionFor(query string, stmt sqlparser.Statement, vschema Contex
 	case *sqlparser.Load:
 		return buildPlanForBypassUsingQuery(query, vschema)
 	case *sqlparser.DBDDL:
-		switch stmt.Action {
-		case sqlparser.CreateDBDDLAction:
-			stmt.DBName
-		default:
-			return nil, vterrors.Errorf(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: Database DDL %v", sqlparser.String(stmt))
+		if stmt.Action ==  sqlparser.CreateDBDDLAction {
+			return buildCreateKeyspacePlan(stmt.DBName, stmt.IfExists), nil
 		}
+		return nil, vterrors.Errorf(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: Database DDL %v", sqlparser.String(stmt))
 	case *sqlparser.SetTransaction:
 		return nil, ErrPlanNotSupported
 	case *sqlparser.Begin, *sqlparser.Commit, *sqlparser.Rollback, *sqlparser.Savepoint, *sqlparser.SRollback, *sqlparser.Release:

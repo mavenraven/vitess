@@ -21,82 +21,61 @@ import (
 	"vitess.io/vitess/go/vt/proto/query"
 	querypb "vitess.io/vitess/go/vt/proto/query"
 	vtrpcpb "vitess.io/vitess/go/vt/proto/vtrpc"
-	"vitess.io/vitess/go/vt/schema"
-	"vitess.io/vitess/go/vt/sqlparser"
 	"vitess.io/vitess/go/vt/vterrors"
-	"vitess.io/vitess/go/vt/vtgate/vindexes"
 )
 
-var _ Primitive = (*CreateDatabaseDDL)(nil)
+var _ Primitive = (*CreateKeyspace)(nil)
 
-//CreateDatabase DDL represents the instructions to create a new keyspace via the user issuing a "CREATE DATABASE" type
+//CreateKeyspace represents the instructions to create a new keyspace via the user issuing a "CREATE DATABASE" type
 //statement. As the actual creation logic is outside of the scope of vitess, the request is submitted to a service.
-type CreateDatabaseDDL struct {
-	RequestedKeyspace *vindexes.Keyspace
+type CreateKeyspace struct {
+	RequestedKeyspace string
+	IfExists bool
 	noTxNeeded
-
 	noInputs
 }
 
-func (v *CreateDatabaseDDL) description() PrimitiveDescription {
+func (v *CreateKeyspace) description() PrimitiveDescription {
 	return PrimitiveDescription{
-		OperatorType: "CreateDatabaseDDL",
+		OperatorType: "CreateKeyspace",
 		Keyspace:     nil,
 		Other: map[string]interface{}{
-			"query": sqlparser.String(v.DDL),
+			"requested_keyspace": v.RequestedKeyspace,
 		},
 	}
 }
 
 //RouteType implements the Primitive interface
-func (v *CreateDatabaseDDL) RouteType() string {
-	return "CreateDatabaseDDL"
+func (v *CreateKeyspace) RouteType() string {
+	return "CreateKeyspace"
 }
 
 //GetKeyspaceName implements the Primitive interface
-func (v *CreateDatabaseDDL) GetKeyspaceName() string {
-	return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "not reachable") // FIXME: david - don't this is reachable
+func (v *CreateKeyspace) GetKeyspaceName() string {
+	return "" // FIXME: david - don't think this is reachable in a way that makes sense
 }
 
 //GetTableName implements the Primitive interface
-func (v *CreateDatabaseDDL) GetTableName() string {
-	return v.DDL.Table.Name.String()
+func (v *CreateKeyspace) GetTableName() string {
+	return "" // FIXME: david - don't this is reachable in a way that makes sense
 }
 
 //Execute implements the Primitive interface
-func (v *CreateDatabaseDDL) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
-	onlineDDL, err := schema.NewOnlineDDL(v.GetKeyspaceName(), v.GetTableName(), v.SQL, v.Strategy, v.Options)
-	if err != nil {
-		return result, err
-	}
-	err = vcursor.SubmitOnlineDDL(onlineDDL)
-	if err != nil {
-		return result, err
-	}
-
+func (v *CreateKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
 	result = &sqltypes.Result{
-		Fields: []*querypb.Field{
-			{
-				Name: "uuid",
-				Type: sqltypes.VarChar,
-			},
-		},
-		Rows: [][]sqltypes.Value{
-			{
-				sqltypes.NewVarChar(onlineDDL.UUID),
-			},
-		},
-		RowsAffected: 1,
+		Fields: []*querypb.Field{},
+		Rows: [][]sqltypes.Value{},
+		RowsAffected: 999,
 	}
 	return result, err
 }
 
 //StreamExecute implements the Primitive interface
-func (v *CreateDatabaseDDL) StreamExecute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantields bool, callback func(*sqltypes.Result) error) error {
+func (v *CreateKeyspace) StreamExecute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantields bool, callback func(*sqltypes.Result) error) error {
 	return vterrors.Errorf(vtrpcpb.Code_INTERNAL, "not reachable") // FIXME: david - copied from online_ddl.go, also have no idea if this should work
 }
 
 //GetFields implements the Primitive interface
-func (v *CreateDatabaseDDL) GetFields(vcursor VCursor, bindVars map[string]*query.BindVariable) (*sqltypes.Result, error) {
+func (v *CreateKeyspace) GetFields(vcursor VCursor, bindVars map[string]*query.BindVariable) (*sqltypes.Result, error) {
 	return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "not reachable") // FIXME: david - copied from online_ddl.go, also have no idea if this should work
 }
