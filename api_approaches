@@ -1,14 +1,34 @@
-Ultimately, I see two ways to implement the "hook" for this:
+I see two ways to implement the "hook" for this:
 
-1) ExecuteCreateKeyspace calls some endpoint that was passed in a CLI flag to vtgate [json, grpc, whatever]
+1) ExecuteCreateKeyspace calls some async endpoint that was passed in a CLI flag to vtgate:
 
 ExecuteCreateKeyspace:
 Does keyspace exist in topo? 
-true:
-	It definitely exists so return a mysql error that database already exists.
-false:
-	
+	true:
+		It definitely exists so return a mysql error that database already exists.
+	false:
+		vtgate sends request to keyspace create service
+			other added keyspace:
+				Nothing happens at this step.
+			keyspace service partition:
+				Retry loop to send request.
+			vtgate partition:
+(1)				The user is disconnected. When they reconnect, if they run `CREATE DATABASE` again, they'll end up sending another request if the first hasn't finished.
+				Depending on what the other side does, that's probably fine.
+			vtgate and keyspace service partition:
+				The user is disconnected and the request is lost.
+			true:
+(2)				The request has succesfully been submitted. Does keyspace exists in topo?
+					true:
+						Return success to the user.
+					false:
+						Repeat (2).
+					vtgate partition:
+						Same as (1).
+	vtgate partition:
+		The CREATE DATABASE request is lost and the user is disconnected.
 
+	
 2) ExecuteCreateKeyspace records the "DesiredKeyspace" in the topo server in a dir seperate from keyspace, and anything who wants to repond to desired keyspace requests can subscribe to it in some way. psuedocode
 
 ExecuteCreateKeyspace:
@@ -19,13 +39,13 @@ Does keyspace exist in topo?
 				Clean up orphaned desired keyspace and return mysql error that database already exists.
 			false:
 				Return mysql error that database already exists.
-			vtgate fault:
+			vtgate partition:
 				The CREATE DATABASE request is lost and the user is disconnected.
 			keyspace removed:
-				Any orphan desired state is correctly cleaned up, but there's a race since the keyspace no longer exists. Its benign, as we 
+				Any orphan desired state is correctly cleaned up.We return that the database exists.
 	false:
 		Try to create desired keyspace in topo. 
-			vtgate fault:
+			vtgate partition:
 				The CREATE DATABASE request is saved and the user is disconnected. If they attempt to rerun the CREATE, they will end up at (1) or (2).
 		Did the desired keyspace already exist in topo?
 			true:
@@ -42,7 +62,7 @@ Does keyspace exist in topo?
 				Return success to the user.
 				false:
 				
-	vtgate fault:
+	vtgate partition:
 		The CREATE DATABASE request is lost and the user is disconnected.
 
 
