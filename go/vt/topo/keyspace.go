@@ -313,6 +313,19 @@ func (ts *Server) GetKeyspaces(ctx context.Context) ([]string, error) {
 	}
 }
 
+// GetDesiredKeyspaceCreations returns the list of desired keyspace creations in the topology.
+func (ts *Server) GetDesiredKeyspaceCreations(ctx context.Context) ([]string, error) {
+	children, err := ts.globalCell.ListDir(ctx, DesiredKeyspaceCreationsPath, false /*full*/)
+	switch {
+	case err == nil:
+		return DirEntriesToStringArray(children), nil
+	case IsErrType(err, NoNode):
+		return nil, nil
+	default:
+		return nil, err
+	}
+}
+
 // GetShardNames returns the list of shards in a keyspace.
 func (ts *Server) GetShardNames(ctx context.Context, keyspace string) ([]string, error) {
 	shardsPath := path.Join(KeyspacesPath, keyspace, ShardsPath)

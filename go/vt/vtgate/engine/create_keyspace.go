@@ -62,7 +62,7 @@ func (v *CreateKeyspace) GetTableName() string {
 
 //Execute implements the Primitive interface
 func (v *CreateKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
-	err = vcursor.ExecuteCreateKeyspace(v.RequestedKeyspace, v.IfExists)
+	err = vcursor.ExecuteCreateDesiredKeyspace(v.RequestedKeyspace, v.IfExists)
 	if err != nil {
 		return result, err
 	}

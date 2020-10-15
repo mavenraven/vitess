@@ -136,6 +136,29 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 
 }
 
+func (vc *vcursorImpl) ExecuteCreateDesiredKeyspace(desiredKeyspace string, ifExists bool) error {
+	//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it exists?
+	keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
+	if err != nil {
+		return vterrors.Wrapf(err, "vc.topServer.GetKeyspaces")
+	}
+
+	keyspaceExists := false
+	for _, k := range keyspaces {
+		if k == desiredKeyspace {
+			keyspaceExists = true
+			break
+		}
+	}
+
+	if keyspaceExists {
+		vc.topoServer.DeleteKeyspace()
+
+		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
+	}
+
+}
+
 // newVcursorImpl creates a vcursorImpl. Before creating this object, you have to separate out any marginComments that came with
 // the query and supply it here. Trailing comments are typically sent by the application for various reasons,
 // including as identifying markers. So, they have to be added back to all queries that are executed
