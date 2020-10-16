@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	provisionerTypeKey = "provisioner_type"
 	//FIXME: _ or -
+	provisionerType = "provisioner_type"
 	ErrInvalidProvisionerType = fmt.Errorf("provisionerType not found")
 	flags                     = make (map[string]string)
 )
@@ -39,20 +39,24 @@ type Provisioner interface {
 }
 
 func CreateKeyspace(keyspace string) error {
-	p, err := NewProvisioner(*provisionerType, flags)
+	p, err := NewProvisioner(flags[provisionerType], flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
 		p = noopProvisioner{}
 	}
 	return p.CreateKeyspace(keyspace)
 }
 
 func DeleteKeyspace(keyspace string) error {
-	p, err := NewProvisioner(*provisionerType, flags)
+	p, err := NewProvisioner(flags[provisionerType], flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
 		p = noopProvisioner{}
 	}
 	return p.DeleteKeyspace(keyspace)
+}
+
+func init() {
+	 flags[provisionerType] = *flag.String(provisionerType, "noop", "Provisioner type to use")
 }
 

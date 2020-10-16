@@ -6,12 +6,9 @@ import (
 )
 
 var (
-	//FIXME: underscores or dashes?
-	grpcEndpoint        = "provisioner_grpc_endpoint"
 	errNeedGrpcEndpoint = fmt.Errorf("need grpc endpoint to use grpc provisioning")
+	grpcEndpoint = "provisioner_grpc_endpoint"
 )
-
-
 type grpcProvisioner struct {}
 
 func newGRPCProvisioner(config map[string]string) (Provisioner, error){
@@ -37,9 +34,5 @@ func (p *grpcProvisioner) DeleteKeyspace(keyspace string) error {
 
 func init() {
 	provisioners["grpc"] = newGRPCProvisioner
-	flags[grpcEndpoint] = *flag.String(
-		grpcEndpoint,
-		"",
-		"Endpoint to send provisioning requests.",
-	)
+	flags[grpcEndpoint] = *flag.String("provisioner_grpc_endpoint", "", "Endpoint to send provisioning requests.")
 }
