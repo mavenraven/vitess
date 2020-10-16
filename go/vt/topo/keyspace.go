@@ -313,9 +313,9 @@ func (ts *Server) GetKeyspaces(ctx context.Context) ([]string, error) {
 	}
 }
 
-// GetDesiredKeyspaceCreations returns the list of desired keyspace creations in the topology.
-func (ts *Server) GetDesiredKeyspaceCreations(ctx context.Context) ([]string, error) {
-	children, err := ts.globalCell.ListDir(ctx, DesiredKeyspaceCreationsPath, false /*full*/)
+// GetKeyspaceDesiredStates returns the list of keyspace desired states in the topology.
+func (ts *Server) GetKeyspaceDesiredStates(ctx context.Context) ([]string, error) {
+	children, err := ts.globalCell.ListDir(ctx, KeyspaceDesiredStates, false /*full*/)
 	switch {
 	case err == nil:
 		return DirEntriesToStringArray(children), nil

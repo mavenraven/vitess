@@ -25,7 +25,7 @@ import (
 
 var (
 	// AuthorizedKeyspaceDDLUsers specifies the users that can create and delete keyspaces.
-	AuthorizedKeyspaceDDLUsers = flag.String("keyspace_authorized_users", "", "List of users authorized to create and delete keyspaces via DDL, or '%' to allow all users.")
+	AuthorizedKeyspaceDDLUsers = flag.String("keyspace_ddl_authorized_users", "", "List of users authorized to create and delete keyspaces via DDL, or '%' to allow all users.")
 
 	// ddlAllowAll is true if the special value of "*" was specified
 	allowAll bool

@@ -152,7 +152,23 @@ func (vc *vcursorImpl) ExecuteCreateDesiredKeyspace(desiredKeyspace string, ifEx
 	}
 
 	if keyspaceExists {
-		vc.topoServer.DeleteKeyspace()
+		desiredKeyspaceCreates, err := vc.topoServer.GetDesiredKeyspaceCreates(vc.ctx)
+		if err != nil {
+			//Ignore error since the above is optional cleanup logic.
+			return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
+		}
+
+		desiredKeyspaceCreateExists := false
+		for _, dk := range desiredKeyspaceCreates {
+			if dk == desiredKeyspace {
+				desiredKeyspaceCreateExists = true
+				break
+			}
+		}
+
+		if desiredKeyspaceCreateExists {
+			vc.topoServer.DeleteKeyspace()
+		}
 
 		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}
