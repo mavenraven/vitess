@@ -1,7 +1,6 @@
 package provision
 
 import (
-	"flag"
 	"fmt"
 )
 
@@ -34,5 +33,4 @@ func (p *grpcProvisioner) DeleteKeyspace(keyspace string) error {
 
 func init() {
 	provisioners["grpc"] = newGRPCProvisioner
-	flags[grpcEndpoint] = *flag.String("provisioner_grpc_endpoint", "", "Endpoint to send provisioning requests.")
 }
