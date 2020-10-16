@@ -21,7 +21,11 @@ import (
 )
 
 type noopProvisioner struct{}
-
-//FIXME: error
-func (noopProvisioner) CreateKeyspace(keyspace string) error {return fmt.Errorf("must enable --provision ")}
+func (noopProvisioner) CreateKeyspace(keyspace string) error {
+	return fmt.Errorf("not implemented")
 }
+
+func (noopProvisioner) DeleteKeyspace(keyspace string) error {
+	return fmt.Errorf("not implemented")
+}
+
