@@ -21,11 +21,20 @@ import (
 )
 
 type noopProvisioner struct{}
+
+func newNoopProvisioner(config map[string]string) (Provisioner, error){
+	return noopProvisioner{}, nil
+}
+
 func (noopProvisioner) CreateKeyspace(keyspace string) error {
 	return fmt.Errorf("not implemented")
 }
 
 func (noopProvisioner) DeleteKeyspace(keyspace string) error {
 	return fmt.Errorf("not implemented")
+}
+
+func init() {
+	provisioners["noop"] = newNoopProvisioner
 }
 

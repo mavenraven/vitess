@@ -22,8 +22,6 @@ package provision
 import (
 	"flag"
 	"fmt"
-	"io"
-	"strings"
 	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/vterrors"
 )
@@ -31,11 +29,8 @@ import (
 var (
 	provisionerTypeKey = "provisioner_type"
 	//FIXME: _ or -
-	provisionerTypeValue = flag.String(provisionerTypeKey, "noop", "Provisioner type to use")
-
-	provisioners              = make(map[string]Provisioner)
 	ErrInvalidProvisionerType = fmt.Errorf("provisionerType not found")
-	flagsConfig               = make (map[string]string)
+	flags                     = make (map[string]string)
 )
 
 type Provisioner interface {
@@ -43,35 +38,21 @@ type Provisioner interface {
 	DeleteKeyspace(keyspace string) error
 }
 
-func ProvisionerFactory(provisionerType string, config map[string]string) (Provisioner, error) {
-	switch provisionerType {
-	case "noop":
-		return noopProvisioner{}, nil
-	case "grpc":
-		return newGRPCProvisioner(config)
-	default:
-		return nil, ErrInvalidProvisionerType
-	}
-}
-
 func CreateKeyspace(keyspace string) error {
-	p, err := ProvisionerFactory(*provisionerTypeValue, flagsConfig)
+	p, err := NewProvisioner(*provisionerType, flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerTypeValue))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
 		p = noopProvisioner{}
 	}
 	return p.CreateKeyspace(keyspace)
 }
 
 func DeleteKeyspace(keyspace string) error {
-	p, err := ProvisionerFactory(*provisionerTypeValue, flagsConfig)
+	p, err := NewProvisioner(*provisionerType, flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerTypeValue))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
 		p = noopProvisioner{}
 	}
 	return p.DeleteKeyspace(keyspace)
 }
 
-func init() {
-	flagsConfig[provisionerTypeKey] = *provisionerTypeValue
-}

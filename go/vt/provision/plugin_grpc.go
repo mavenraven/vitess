@@ -7,18 +7,17 @@ import (
 
 var (
 	//FIXME: underscores or dashes?
-	grpcEndpointKey = "provisioner_grpc_endpoint"
-	grpcEndpointValue = flag.String(grpcEndpointKey, "", "Endpoint to send provisioning requests.")
+	grpcEndpoint        = "provisioner_grpc_endpoint"
 	errNeedGrpcEndpoint = fmt.Errorf("need grpc endpoint to use grpc provisioning")
 )
 
 
 type grpcProvisioner struct {}
 
-func newGRPCProvisioner(config map[string]string) (*grpcProvisioner, error){
-	grpcEndpointConfig, ok := config[grpcEndpointKey]
+func newGRPCProvisioner(config map[string]string) (Provisioner, error){
+	grpcEndpointConfig, ok := config[grpcEndpoint]
 	if !ok {
-		grpcEndpointConfig = *grpcEndpointValue
+		return nil, errNeedGrpcEndpoint
 	}
 
 	if grpcEndpointConfig == "" {
@@ -37,5 +36,10 @@ func (p *grpcProvisioner) DeleteKeyspace(keyspace string) error {
 }
 
 func init() {
-	flagsConfig[grpcEndpointKey] = *grpcEndpointValue
+	provisioners["grpc"] = newGRPCProvisioner
+	flags[grpcEndpoint] = *flag.String(
+		grpcEndpoint,
+		"",
+		"Endpoint to send provisioning requests.",
+	)
 }
