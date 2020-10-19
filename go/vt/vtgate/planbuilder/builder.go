@@ -341,7 +341,7 @@ func createInstructionFor(query string, stmt sqlparser.Statement, vschema Contex
 		return buildPlanForBypassUsingQuery(query, vschema)
 	case *sqlparser.DBDDL:
 		if stmt.Action ==  sqlparser.CreateDBDDLAction {
-			return buildCreateKeyspacePlan(stmt.DBName, stmt.IfExists), nil
+			return buildCreateKeyspacePlan(stmt.DBName, stmt.IfNotExists), nil
 		}
 		return nil, vterrors.Errorf(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: Database DDL %v", sqlparser.String(stmt))
 	case *sqlparser.SetTransaction:

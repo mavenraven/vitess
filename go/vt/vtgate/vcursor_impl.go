@@ -138,7 +138,7 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 
 }
 
-func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsClause bool) error {
+func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) error {
 	allowed := keyspaceacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
 	if !allowed {
 		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform keyspace operations")
@@ -165,11 +165,11 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsCl
 		return err
 	}
 
-	if keyspaceExists && includesIfExistsClause {
+	if keyspaceExists && ifNotExists {
 		return nil
 	}
 
-	if keyspaceExists && !includesIfExistsClause {
+	if keyspaceExists {
 		//FIXME: better error
 		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}

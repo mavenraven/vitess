@@ -30,7 +30,7 @@ var _ Primitive = (*CreateKeyspace)(nil)
 //statement. As the actual creation logic is outside of the scope of vitess, the request is submitted to a service.
 type CreateKeyspace struct {
 	RequestedKeyspace string
-	IfExists bool
+	IfNotExists bool
 	noTxNeeded
 	noInputs
 }
