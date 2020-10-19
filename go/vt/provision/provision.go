@@ -30,34 +30,40 @@ var (
 	//FIXME: _ or -
 	provisionerType = "provisioner_type"
 	//FIXME: better error types
-	ErrInvalidProvisionerType = fmt.Errorf("provisionerType not found")
-	ErrKeyspaceAlreadyExists = fmt.Errorf("keyspace already exists")
-	ErrProvisionTimeout = fmt.Errorf("deadline exceeded to provision keyspace")
-	ErrProvisionConnection = fmt.Errorf("provisionerType not found")
-	flags                     = make (map[string]string)
+	ErrInvalidProvisionerType           = fmt.Errorf("provisionerType not found")
+	ErrKeyspaceAlreadyExists            = fmt.Errorf("keyspace already exists")
+	ErrProvisionConnection              = fmt.Errorf("provisionerType not found")
+	flags                               = make (map[string]string)
 )
 
+/*
+The contract for the methods of Provisioner is that they return nil if they have successfully received your request.
+The caller still needs to check with topo to see if your keyspace has been created or deleted.
+The caller does not need to handle retries.
+ */
 type Provisioner interface {
-	CreateKeyspace(keyspace string) error
-	DeleteKeyspace(keyspace string) error
+	RequestCreateKeyspace(keyspace string) error
+	RequestDeleteKeyspace(keyspace string) error
 }
 
-func CreateKeyspace(keyspace string) error {
+/*
+ */
+func RequestCreateKeyspace(keyspace string) error {
 	p, err := NewProvisioner(flags[provisionerType], flags)
 	if err != nil {
 		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
 		p = noopProvisioner{}
 	}
-	return p.CreateKeyspace(keyspace)
+	return p.RequestCreateKeyspace(keyspace)
 }
 
-func DeleteKeyspace(keyspace string) error {
+func RequestDeleteKeyspace(keyspace string) error {
 	p, err := NewProvisioner(flags[provisionerType], flags)
 	if err != nil {
 		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
 		p = noopProvisioner{}
 	}
-	return p.DeleteKeyspace(keyspace)
+	return p.RequestDeleteKeyspace(keyspace)
 }
 
 func init() {

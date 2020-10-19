@@ -138,18 +138,25 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 }
 
 func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsClause bool) error {
-	//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it exists?
-	keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
-	if err != nil {
-		return vterrors.Wrapf(err, "vc.topServer.GetKeyspaces")
+	checkKeyspaceExists := func() (bool, error) {
+		//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it keyspaceExists?
+		keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
+		if err != nil {
+			return false, vterrors.Wrapf(err, "vc.topServer.GetKeyspaces")
+		}
+
+		for _, k := range keyspaces {
+			if k == keyspace {
+				return true, nil
+			}
+		}
+
+		return false, nil
 	}
 
-	keyspaceExists := false
-	for _, k := range keyspaces {
-		if k == keyspace {
-			keyspaceExists = true
-			break
-		}
+	keyspaceExists, err := checkKeyspaceExists()
+	if err != nil {
+		return err
 	}
 
 	if keyspaceExists && includesIfExistsClause {
@@ -158,23 +165,45 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsCl
 
 	if keyspaceExists && !includesIfExistsClause {
 		//FIXME: better error
-		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
+		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already keyspaceExists", keyspace))
 	}
 
-	switch provision.CreateKeyspace(keyspace) {
-	case provision.ErrKeyspaceAlreadyExists:
-		if includesIfExistsClause {
-			return nil
-		}
-		return vterrors.Wrapf(err, fmt.Sprintf("keyspace %v already exists", keyspace))
-	case provision.ErrProvisionTimeout:
-		return vterrors.Wrapf(err, fmt.Sprintf("provisioning of keyspace %v exceeded deadline", keyspace))
-	case provision.ErrProvisionConnection:
-		return vterrors.Wrapf(err, fmt.Sprintf("provisioning of keyspace %v exceeded deadline", keyspace))
-	default:
-		//FIXME: logging?
-		return vterrors.Wrapf(err, fmt.Sprintf("unhandled erorr"))
+	err = provision.RequestCreateKeyspace(keyspace)
+	if err != nil {
+		return err
 	}
+
+	//FIXME: make configurable
+	ctx, cancel := context.WithTimeout(vc.ctx, 5 * time.Minute)
+	defer cancel()
+
+	errOut := make(chan error)
+	defer close (errOut)
+
+	go func(ctx context.Context) <-chan error {
+		for {
+			select {
+			case <-ctx.Done():
+				//FIXME: better error
+				errOut <- context.Canceled
+				break
+				//FIXME: reasonable sleep time?
+			case <-time.After(5 * time.Second):
+				exists, err := checkKeyspaceExists()
+				if err != nil {
+					errOut <- err
+					break
+				}
+
+				if exists {
+					errOut <- nil
+					break
+				}
+			}
+		}
+	}(ctx)
+
+	return <-errOut
 }
 
 // newVcursorImpl creates a vcursorImpl. Before creating this object, you have to separate out any marginComments that came with

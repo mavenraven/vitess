@@ -26,11 +26,13 @@ func newNoopProvisioner(config map[string]string) (Provisioner, error){
 	return noopProvisioner{}, nil
 }
 
-func (noopProvisioner) CreateKeyspace(keyspace string) error {
+func (noopProvisioner) RequestCreateKeyspace(keyspace string) error {
+	//FIXME: better error
 	return fmt.Errorf("not implemented")
 }
 
-func (noopProvisioner) DeleteKeyspace(keyspace string) error {
+func (noopProvisioner) RequestDeleteKeyspace(keyspace string) error {
+	//FIXME: better error
 	return fmt.Errorf("not implemented")
 }
 

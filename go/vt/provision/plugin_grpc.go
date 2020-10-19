@@ -23,11 +23,11 @@ func newGRPCProvisioner(config map[string]string) (Provisioner, error){
 	return &grpcProvisioner{}, nil
 }
 
-func (p *grpcProvisioner) CreateKeyspace(keyspace string) error {
+func (p *grpcProvisioner) RequestCreateKeyspace(keyspace string) error {
 	return nil
 }
 
-func (p *grpcProvisioner) DeleteKeyspace(keyspace string) error {
+func (p *grpcProvisioner) RequestDeleteKeyspace(keyspace string) error {
 	return nil
 }
 
