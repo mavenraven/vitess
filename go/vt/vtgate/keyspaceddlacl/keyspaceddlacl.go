@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package keyspacddleacl
+package keyspaceacl
 
 import (
 	"flag"
@@ -25,12 +25,12 @@ import (
 
 var (
 	// AuthorizedKeyspaceDDLUsers specifies the users that can create and delete keyspaces.
-	AuthorizedKeyspaceDDLUsers = flag.String("keyspace_ddl_authorized_users", "", "List of users authorized to create and delete keyspaces via DDL, or '%' to allow all users.")
+	AuthorizedKeyspaceDDLUsers = flag.String("keyspace_ddl_authorized_users", "", "List of users authorized to modify keyspaces via DDL, or '%' to allow all users.")
 
-	// ddlAllowAll is true if the special value of "*" was specified
+	// allowAll is true if the special value of "*" was specified
 	allowAll bool
 
-	// ddlACL contains a set of allowed usernames
+	// aCL contains a set of allowed usernames
 	acl map[string]struct{}
 )
 

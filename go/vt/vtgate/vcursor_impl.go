@@ -23,6 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
+	keyspaceacl "vitess.io/vitess/go/vt/vtgate/keyspaceddlacl"
 
 	"golang.org/x/sync/errgroup"
 
@@ -138,6 +139,11 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 }
 
 func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsClause bool) error {
+	allowed := keyspaceacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
+	if !allowed {
+		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform keyspace operations")
+	}
+
 	checkKeyspaceExists := func() (bool, error) {
 		//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it keyspaceExists?
 		keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
@@ -165,7 +171,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsCl
 
 	if keyspaceExists && !includesIfExistsClause {
 		//FIXME: better error
-		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already keyspaceExists", keyspace))
+		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}
 
 	err = provision.RequestCreateKeyspace(keyspace)
@@ -173,7 +179,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsCl
 		return err
 	}
 
-	//FIXME: make configurable
+	//FIXME: make configurable?
 	ctx, cancel := context.WithTimeout(vc.ctx, 5 * time.Minute)
 	defer cancel()
 

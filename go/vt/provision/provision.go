@@ -46,8 +46,6 @@ type Provisioner interface {
 	RequestDeleteKeyspace(keyspace string) error
 }
 
-/*
- */
 func RequestCreateKeyspace(keyspace string) error {
 	p, err := NewProvisioner(flags[provisionerType], flags)
 	if err != nil {
