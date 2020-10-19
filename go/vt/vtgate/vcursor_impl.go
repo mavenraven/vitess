@@ -179,37 +179,24 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsCl
 		return err
 	}
 
-	//FIXME: make configurable?
-	ctx, cancel := context.WithTimeout(vc.ctx, 5 * time.Minute)
-	defer cancel()
+	for {
+		select {
+		//FIXME: make configurable?
+		case <-time.After(5 * time.Minute):
+			//FIXME: better error
+			return fmt.Errorf("deadline expired")
+			//FIXME: reasonable sleep time?
+		case <-time.After(5 * time.Second):
+			exists, err := checkKeyspaceExists()
+			if err != nil {
+				return err
+			}
 
-	errOut := make(chan error)
-	defer close (errOut)
-
-	go func(ctx context.Context) <-chan error {
-		for {
-			select {
-			case <-ctx.Done():
-				//FIXME: better error
-				errOut <- context.Canceled
-				break
-				//FIXME: reasonable sleep time?
-			case <-time.After(5 * time.Second):
-				exists, err := checkKeyspaceExists()
-				if err != nil {
-					errOut <- err
-					break
-				}
-
-				if exists {
-					errOut <- nil
-					break
-				}
+			if exists {
+				return nil
 			}
 		}
-	}(ctx)
-
-	return <-errOut
+	}
 }
 
 // newVcursorImpl creates a vcursorImpl. Before creating this object, you have to separate out any marginComments that came with
