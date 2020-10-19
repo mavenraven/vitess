@@ -29,7 +29,11 @@ import (
 var (
 	//FIXME: _ or -
 	provisionerType = "provisioner_type"
+	//FIXME: better error types
 	ErrInvalidProvisionerType = fmt.Errorf("provisionerType not found")
+	ErrKeyspaceAlreadyExists = fmt.Errorf("keyspace already exists")
+	ErrProvisionTimeout = fmt.Errorf("deadline exceeded to provision keyspace")
+	ErrProvisionConnection = fmt.Errorf("provisionerType not found")
 	flags                     = make (map[string]string)
 )
 

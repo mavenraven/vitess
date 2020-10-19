@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"vitess.io/vitess/go/vt/provision"
 
 	"golang.org/x/sync/errgroup"
 
@@ -136,7 +137,7 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 
 }
 
-func (vc *vcursorImpl) ExecuteCreateDesiredKeyspace(desiredKeyspace string, ifExists bool) error {
+func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, includesIfExistsClause bool) error {
 	//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it exists?
 	keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
 	if err != nil {
@@ -145,34 +146,35 @@ func (vc *vcursorImpl) ExecuteCreateDesiredKeyspace(desiredKeyspace string, ifEx
 
 	keyspaceExists := false
 	for _, k := range keyspaces {
-		if k == desiredKeyspace {
+		if k == keyspace {
 			keyspaceExists = true
 			break
 		}
 	}
 
-	if keyspaceExists {
-		desiredKeyspaceCreates, err := vc.topoServer.GetDesiredKeyspaceCreates(vc.ctx)
-		if err != nil {
-			//Ignore error since the above is optional cleanup logic.
-			return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
-		}
+	if keyspaceExists && includesIfExistsClause {
+		return nil
+	}
 
-		desiredKeyspaceCreateExists := false
-		for _, dk := range desiredKeyspaceCreates {
-			if dk == desiredKeyspace {
-				desiredKeyspaceCreateExists = true
-				break
-			}
-		}
-
-		if desiredKeyspaceCreateExists {
-			vc.topoServer.DeleteKeyspace()
-		}
-
+	if keyspaceExists && !includesIfExistsClause {
+		//FIXME: better error
 		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}
 
+	switch provision.CreateKeyspace(keyspace) {
+	case provision.ErrKeyspaceAlreadyExists:
+		if includesIfExistsClause {
+			return nil
+		}
+		return vterrors.Wrapf(err, fmt.Sprintf("keyspace %v already exists", keyspace))
+	case provision.ErrProvisionTimeout:
+		return vterrors.Wrapf(err, fmt.Sprintf("provisioning of keyspace %v exceeded deadline", keyspace))
+	case provision.ErrProvisionConnection:
+		return vterrors.Wrapf(err, fmt.Sprintf("provisioning of keyspace %v exceeded deadline", keyspace))
+	default:
+		//FIXME: logging?
+		return vterrors.Wrapf(err, fmt.Sprintf("unhandled erorr"))
+	}
 }
 
 // newVcursorImpl creates a vcursorImpl. Before creating this object, you have to separate out any marginComments that came with
