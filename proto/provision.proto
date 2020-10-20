@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 syntax = "proto3";
+option go_package = "vitess.io/vitess/go/vt/proto/provision";
+
+package "provision"
 
 service Provision {
   rpc RequestCreateKeyspace(RequestCreateKeyspaceRequest) returns (ProvisionError);
@@ -21,7 +24,7 @@ service Provision {
 
 
 message RequestCreateKeyspaceRequest {
-  keyspace string = 1
+  string keyspace = 1;
 }
 
 message ProvisionError {
