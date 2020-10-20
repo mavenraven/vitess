@@ -23,7 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
-	keyspaceacl "vitess.io/vitess/go/vt/vtgate/keyspaceddlacl"
+	keyspaceacl "vitess.io/vitess/go/vt/vtgate/keyspaceacl"
 
 	"golang.org/x/sync/errgroup"
 
@@ -174,18 +174,22 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}
 
-	err = provision.RequestCreateKeyspace(keyspace)
+	err = provision.RequestCreateKeyspace(vc.ctx, keyspace)
 	if err != nil {
 		return err
 	}
 
 	for {
 		select {
+		case <- vc.ctx.Done():
+			//FIXME: better error
+			return fmt.Errorf("got cancelled")
 		//FIXME: make configurable?
 		case <-time.After(5 * time.Minute):
 			//FIXME: better error
 			return fmt.Errorf("deadline expired")
 			//FIXME: reasonable sleep time?
+			//FIXME: use WatchSrveKeyspace instead? seems like a race condition though...
 		case <-time.After(5 * time.Second):
 			exists, err := checkKeyspaceExists()
 			if err != nil {

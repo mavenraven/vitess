@@ -10,4 +10,3 @@ func buildCreateKeyspacePlan(keyspaceName string, ifNotExists bool) engine.Primi
 		IfNotExists: ifNotExists,
 	}
 }
-

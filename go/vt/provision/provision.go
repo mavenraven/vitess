@@ -20,6 +20,7 @@ limitations under the License.
 package provision
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"vitess.io/vitess/go/vt/log"
@@ -28,7 +29,7 @@ import (
 
 var (
 	//FIXME: _ or -
-	provisionerType = "provisioner_type"
+	provisionerType = flag.String("provisioner_type", "noop", "Provisioner type to use")
 	//FIXME: better error types
 	ErrInvalidProvisionerType           = fmt.Errorf("provisionerType not found")
 	ErrKeyspaceAlreadyExists            = fmt.Errorf("keyspace already exists")
@@ -42,29 +43,28 @@ The caller still needs to check with topo to see if your keyspace has been creat
 The caller does not need to handle retries.
  */
 type Provisioner interface {
-	RequestCreateKeyspace(keyspace string) error
-	RequestDeleteKeyspace(keyspace string) error
+	RequestCreateKeyspace(ctx context.Context, keyspace string) error
+	RequestDeleteKeyspace(ctx context.Context, keyspace string) error
 }
 
-func RequestCreateKeyspace(keyspace string) error {
-	p, err := NewProvisioner(flags[provisionerType], flags)
+func RequestCreateKeyspace(ctx context.Context, keyspace string) error {
+	p, err := NewProvisioner(*provisionerType, flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
 		p = noopProvisioner{}
 	}
-	return p.RequestCreateKeyspace(keyspace)
+	return p.RequestCreateKeyspace(ctx, keyspace)
 }
 
-func RequestDeleteKeyspace(keyspace string) error {
-	p, err := NewProvisioner(flags[provisionerType], flags)
+func RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
+	p, err := NewProvisioner(*provisionerType, flags)
 	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", flags[provisionerType]))
+		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
 		p = noopProvisioner{}
 	}
-	return p.RequestDeleteKeyspace(keyspace)
+	return p.RequestDeleteKeyspace(ctx, keyspace)
 }
 
 func init() {
-	 flags[provisionerType] = *flag.String(provisionerType, "noop", "Provisioner type to use")
 }
 

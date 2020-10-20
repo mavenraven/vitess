@@ -17,6 +17,7 @@ limitations under the License.
 package provision
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -26,12 +27,12 @@ func newNoopProvisioner(config map[string]string) (Provisioner, error){
 	return noopProvisioner{}, nil
 }
 
-func (noopProvisioner) RequestCreateKeyspace(keyspace string) error {
+func (noopProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
 	//FIXME: better error
 	return fmt.Errorf("not implemented")
 }
 
-func (noopProvisioner) RequestDeleteKeyspace(keyspace string) error {
+func (noopProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
 	//FIXME: better error
 	return fmt.Errorf("not implemented")
 }

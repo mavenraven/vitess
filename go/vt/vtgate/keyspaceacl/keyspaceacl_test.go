@@ -22,7 +22,7 @@ import (
 	querypb "vitess.io/vitess/go/vt/proto/query"
 )
 
-func TestKeyspaceDDLAcl(t *testing.T) {
+func TestKeyspaceAcl(t *testing.T) {
 	redUser := querypb.VTGateCallerID{Username: "redUser"}
 	yellowUser := querypb.VTGateCallerID{Username: "yellowUser"}
 

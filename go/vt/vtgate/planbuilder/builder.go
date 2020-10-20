@@ -340,6 +340,7 @@ func createInstructionFor(query string, stmt sqlparser.Statement, vschema Contex
 	case *sqlparser.Load:
 		return buildPlanForBypassUsingQuery(query, vschema)
 	case *sqlparser.DBDDL:
+		//FIXME: error out for CREATE DATABSE IF EXISTS since it doesn't make sense
 		if stmt.Action ==  sqlparser.CreateDBDDLAction {
 			return buildCreateKeyspacePlan(stmt.DBName, stmt.IfNotExists), nil
 		}
