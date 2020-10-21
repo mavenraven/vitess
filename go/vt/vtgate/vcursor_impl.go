@@ -23,7 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
-	keyspaceacl "vitess.io/vitess/go/vt/vtgate/keyspaceacl"
+	keyspaceacl "vitess.io/vitess/go/vt/vtgate/provisionacl"
 
 	"golang.org/x/sync/errgroup"
 

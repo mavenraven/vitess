@@ -28,7 +28,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"vitess.io/vitess/go/vt/vtgate/keyspaceacl"
+	"vitess.io/vitess/go/vt/vtgate/provisionacl"
 
 	"vitess.io/vitess/go/vt/sysvars"
 
@@ -125,7 +125,7 @@ func NewExecutor(ctx context.Context, serv srvtopo.Server, cell string, resolver
 	}
 
 	vschemaacl.Init()
-	keyspaceacl.Init()
+	provisionacl.Init()
 	e.vm = &VSchemaManager{e: e}
 	e.vm.watchSrvVSchema(ctx, cell)
 

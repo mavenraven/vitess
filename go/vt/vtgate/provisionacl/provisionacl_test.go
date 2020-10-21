@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package keyspaceacl
+package provisionacl
 
 import (
 	"testing"
@@ -22,7 +22,7 @@ import (
 	querypb "vitess.io/vitess/go/vt/proto/query"
 )
 
-func TestKeyspaceAcl(t *testing.T) {
+func TestProvisionAcl(t *testing.T) {
 	redUser := querypb.VTGateCallerID{Username: "redUser"}
 	yellowUser := querypb.VTGateCallerID{Username: "yellowUser"}
 
@@ -35,7 +35,7 @@ func TestKeyspaceAcl(t *testing.T) {
 	}
 
 	// Test wildcard
-	*AuthorizedKeyspaceDDLUsers = "%"
+	*ProvisionAuthorizedUsers = "%"
 	Init()
 
 	if !Authorized(&redUser) {
@@ -46,7 +46,7 @@ func TestKeyspaceAcl(t *testing.T) {
 	}
 
 	// Test user list
-	*AuthorizedKeyspaceDDLUsers = "oneUser, twoUser, redUser, blueUser"
+	*ProvisionAuthorizedUsers = "oneUser, twoUser, redUser, blueUser"
 	Init()
 
 	if !Authorized(&redUser) {
@@ -57,7 +57,7 @@ func TestKeyspaceAcl(t *testing.T) {
 	}
 
 	// Revert to baseline state for other tests
-	*AuthorizedKeyspaceDDLUsers = ""
+	*ProvisionAuthorizedUsers = ""
 	Init()
 
 	// By default no users are allowed in

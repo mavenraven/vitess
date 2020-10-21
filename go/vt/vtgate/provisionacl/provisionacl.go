@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package keyspaceacl
+package provisionacl
 
 import (
 	"flag"
@@ -24,8 +24,8 @@ import (
 )
 
 var (
-	// AuthorizedKeyspaceDDLUsers specifies the users that can create and delete keyspaces.
-	AuthorizedKeyspaceDDLUsers = flag.String("keyspace_ddl_authorized_users", "", "List of users authorized to modify keyspaces via DDL, or '%' to allow all users.")
+	// ProvisionAuthorizedUsers specifies the users that can do provisioning operations via DDL.
+	ProvisionAuthorizedUsers = flag.String("provision_authorized_users", "", "List of users authorized to run provisioning operations via DDL, or '%' to allow all users.")
 
 	// allowAll is true if the special value of "*" was specified
 	allowAll bool
@@ -39,14 +39,14 @@ func Init() {
 	acl = make(map[string]struct{})
 	allowAll = false
 
-	if *AuthorizedKeyspaceDDLUsers == "%" {
+	if *ProvisionAuthorizedUsers == "%" {
 		allowAll = true
 		return
-	} else if *AuthorizedKeyspaceDDLUsers == "" {
+	} else if *ProvisionAuthorizedUsers == "" {
 		return
 	}
 
-	for _, user := range strings.Split(*AuthorizedKeyspaceDDLUsers, ",") {
+	for _, user := range strings.Split(*ProvisionAuthorizedUsers, ",") {
 		user = strings.TrimSpace(user)
 		acl[user] = struct{}{}
 	}
