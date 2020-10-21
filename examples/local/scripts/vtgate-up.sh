@@ -40,7 +40,7 @@ vtgate \
   -service_map 'grpc-vtgateservice' \
   -pid_file $VTDATAROOT/tmp/vtgate.pid \
   -mysql_auth_server_impl none \
-  -keyspace_ddl_authorized_users '%' \
+  -provision_authorized_users '%' \
   -provisioner_type 'grpc' \
   > $VTDATAROOT/tmp/vtgate.out 2>&1 &
 
