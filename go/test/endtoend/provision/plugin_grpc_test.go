@@ -117,6 +117,7 @@ func TestProvisionKeyspace(t *testing.T) {
 
 	errors := make(chan error)
 	defer close(errors)
+
 	go func() {
 		qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
 		if err != nil {
@@ -135,14 +136,14 @@ func TestProvisionKeyspace(t *testing.T) {
 				"the connection is too low, and the test is flaking.",
 				err,
 			)
-			return
 		case result := <-results:
 			fmt.Printf("%v", result)
-			return
+			break
 		case <-time.After(10 * time.Second):
 			conn.Close()
 		}
 	}
+	fmt.Println("never gets here")
 	//	assert.Equal(t, 1, result.RowsAffected, "got the following back from vtgate instead: %v", result.Rows)
 }
 
