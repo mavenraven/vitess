@@ -20,10 +20,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+	"time"
 	"vitess.io/vitess/go/mysql"
+	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/test/endtoend/cluster"
 	"vitess.io/vitess/go/vt/proto/topodata"
 )
@@ -53,6 +56,8 @@ func TestMain(m *testing.M) {
 		clusterForProvisionTest.VtGateExtraArgs = []string {
 			"-provision_authorized_users",
 			"%",
+			"-provision_type",
+			"grpc",
 		}
 
 		defer clusterForProvisionTest.Teardown()
@@ -95,24 +100,70 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func TestCreateKeyspace(t *testing.T) {
+func TestProvisionKeyspace(t *testing.T) {
 	defer cluster.PanicHandler(t)
 
 	ctx := context.Background()
 	vtParams := mysql.ConnParams{
 		Host: clusterForProvisionTest.Hostname,
 		Port: clusterForProvisionTest.VtgateMySQLPort,
+		ConnectTimeoutMs: 1000,
 	}
 	conn, err := mysql.Connect(ctx, &vtParams)
 	require.Nil(t, err)
 
-	qr, err := conn.ExecuteFetch("select * from information_schema.tables;", 1000, true)
+	results := make(chan sqltypes.Result)
+	defer close(results)
 
-	fmt.Printf("%+v\n", qr)
+	errors := make(chan error)
+	defer close(errors)
+	go func() {
+		qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
+		if err != nil {
+			errors <- err
+			return
+		}
+		results <- *qr
+	}()
 
-	//output, err := clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetSrvKeyspaceNames", cell)
-	//require.Nil(t, err)
-//	assert.Contains(t, strings.Split(output, "\n"), keyspaceUnshardedName)
-//	assert.Contains(t, strings.Split(output, "\n"), keyspaceShardedName)
+	for {
+		select {
+		case err = <-errors:
+			assert.FailNow(t,
+				"CREATE DATABASE took too long. Since CREATE DATABASE blocks until the keyspace is made, " +
+				"it is likely that this is a broken test. However, there is a possibility that the timeout before closing " +
+				"the connection is too low, and the test is flaking.",
+				err,
+			)
+			return
+		case result := <-results:
+			fmt.Printf("%v", result)
+			return
+		case <-time.After(10 * time.Second):
+			conn.Close()
+		}
+	}
+	//	assert.Equal(t, 1, result.RowsAffected, "got the following back from vtgate instead: %v", result.Rows)
 }
 
+/*
+func startGrpcServer(ctx context.Context) Addr {
+		var lc net.ListenConfig
+		listener, err := lc.Listen(ctx, "tcp", "localhost")
+		if err != nil {
+			//FIXME: require nil
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		var opts []grpc.ServerOption
+		grpcServer := grpc.NewServer(opts...)
+		provision.RegisterProvisionServer(grpcServer, myServer{})
+	go func() {
+		grpcServer.(listener)
+
+	}()
+
+
+
+}
+*/

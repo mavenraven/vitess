@@ -29,9 +29,9 @@ import (
 
 var (
 	//FIXME: _ or -
-	provisionerType = flag.String("provisioner_type", "noop", "Provisioner type to use")
+	provisionerType = flag.String("provision_type", "noop", "Provisioner type to use")
 	//FIXME: better error types
-	ErrInvalidProvisionerType           = fmt.Errorf("provisionerType not found")
+	ErrInvalidProvisionerType           = fmt.Errorf("provisionType not found")
 	ErrKeyspaceAlreadyExists            = fmt.Errorf("keyspace already exists")
 	ErrProvisionConnection              = fmt.Errorf("provisionerType not found")
 	flags                               = make (map[string]string)

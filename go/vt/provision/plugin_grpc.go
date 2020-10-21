@@ -11,7 +11,8 @@ import (
 
 var (
 	errNeedGrpcEndpoint = fmt.Errorf("need grpc endpoint to use grpc provisioning")
-	grpcEndpoint = "provisioner_grpc_endpoint"
+	//FIXME: underscores or dashes
+	grpcEndpoint = "provision_grpc_endpoint"
 )
 type grpcProvisioner struct {}
 
