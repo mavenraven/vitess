@@ -19,12 +19,17 @@ package sequence
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"net"
 	"os"
 	"testing"
 	"vitess.io/vitess/go/mysql"
 	"vitess.io/vitess/go/test/endtoend/cluster"
+	"vitess.io/vitess/go/vt/log"
+	"vitess.io/vitess/go/vt/proto/provision"
 	"vitess.io/vitess/go/vt/proto/topodata"
 )
 
@@ -42,6 +47,7 @@ var (
 								keyspace_id bigint(20) unsigned NOT NULL,
 								primary key (id)
 								) Engine=InnoDB`
+	grpcServerAddress net.Addr
 )
 
 func TestMain(m *testing.M) {
@@ -49,12 +55,36 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	exitCode := func() int {
+
+		addrChan := make(chan net.Addr)
+		defer close(addrChan)
+
+		errorChan := make(chan error)
+		defer close(errorChan)
+
+		go func() {
+			err := startGrpcServer(context.TODO(), addrChan)
+			if err != nil {
+				errorChan <- err
+			}
+		}()
+
+		select {
+		case err := <-errorChan:
+			log.Error(err)
+			return 1
+		case grpcServerAddress = <-addrChan:
+		}
+
 		clusterForProvisionTest = cluster.NewCluster(cell, hostname)
 		clusterForProvisionTest.VtGateExtraArgs = []string {
 			"-provision_authorized_users",
 			"%",
 			"-provision_type",
 			"grpc",
+			"-provision_grpc_endpoint",
+			grpcServerAddress.String(),
+
 		}
 
 		defer clusterForProvisionTest.Teardown()
@@ -92,12 +122,14 @@ func TestMain(m *testing.M) {
 			return 1
 		}
 
+
 		return m.Run()
 	}()
 	os.Exit(exitCode)
 }
 
 func TestProvisionKeyspace(t *testing.T) {
+	fmt.Println(grpcServerAddress)
 	defer cluster.PanicHandler(t)
 
 	ctx := context.Background()
@@ -109,30 +141,47 @@ func TestProvisionKeyspace(t *testing.T) {
 	conn, err := mysql.Connect(ctx, &vtParams)
 	require.Nil(t, err)
 
+	log.Info(clusterForProvisionTest.Keyspaces)
 	qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
 	require.Nil(t, err)
 
-	assert.Equal(t, 1, qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
+	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
+
+	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", "my_keyspace")
+	//If GetKeyspace doesn't return an error, the keyspace exists.
+	require.Nil(t, err)
 }
 
-/*
-func startGrpcServer(ctx context.Context) Addr {
-		var lc net.ListenConfig
-		listener, err := lc.Listen(ctx, "tcp", "localhost")
-		if err != nil {
-			//FIXME: require nil
-			log.Fatalf("failed to listen: %v", err)
-		}
+type testGrpcServer struct {}
 
-		var opts []grpc.ServerOption
-		grpcServer := grpc.NewServer(opts...)
-		provision.RegisterProvisionServer(grpcServer, myServer{})
+func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionError, error) {
+	log.Info("got request for keyspace: " + rckr.Keyspace)
+	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block until the
+	//the keyspace has been created.
 	go func() {
-		grpcServer.(listener)
-
+		err := clusterForProvisionTest.VtctlProcess.CreateKeyspace(rckr.Keyspace)
+		if err != nil {
+			log.Error(err)
+		}
 	}()
-
-
-
+	return &provision.ProvisionError{Code: provision.Code_OK}, nil
 }
-*/
+
+
+func startGrpcServer(ctx context.Context, addr chan net.Addr) error {
+	var lc net.ListenConfig
+	listener, err := lc.Listen(ctx, "tcp", "localhost:")
+	if err != nil {
+		return err
+	}
+
+	defer listener.Close()
+
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+	defer grpcServer.Stop()
+
+	provision.RegisterProvisionServer(grpcServer, testGrpcServer{})
+	addr <- listener.Addr()
+	return grpcServer.Serve(listener)
+}

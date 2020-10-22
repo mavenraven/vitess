@@ -17,6 +17,7 @@ limitations under the License.
 package engine
 
 import (
+	"github.com/opentracing/opentracing-go/log"
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/proto/query"
 	querypb "vitess.io/vitess/go/vt/proto/query"
@@ -64,6 +65,7 @@ func (v *CreateKeyspace) GetTableName() string {
 func (v *CreateKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
 	err = vcursor.ExecuteCreateKeyspace(v.RequestedKeyspace, v.IfNotExists)
 	if err != nil {
+		log.Error(err)
 		return result, err
 	}
 

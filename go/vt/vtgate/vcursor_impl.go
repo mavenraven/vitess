@@ -146,6 +146,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	}
 
 	checkKeyspaceExists := func() (bool, error) {
+		log.Errorf("hi from inside")
 		//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it keyspaceExists?
 		keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
 		if err != nil {
@@ -175,13 +176,10 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
 	}
 
-	log.Errorf("before create keyspace")
 	err = provision.RequestCreateKeyspace(vc.ctx, keyspace)
 	if err != nil {
 		return err
 	}
-
-	log.Errorf("before loop")
 
 	for {
 		select {
@@ -190,13 +188,11 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 			return fmt.Errorf("got cancelled")
 		//FIXME: make configurable
 		case <-time.After(30 * time.Second):
-			log.Errorf("in loop timeout")
 			//FIXME: better error
 			return fmt.Errorf("deadline expired")
 			//FIXME: reasonable sleep time?
 			//FIXME: use WatchSrveKeyspace instead? seems like a race condition though...
 		case <-time.After(5 * time.Second):
-			log.Errorf("in loop check")
 			exists, err := checkKeyspaceExists()
 			if err != nil {
 				return err

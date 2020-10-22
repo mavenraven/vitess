@@ -2,6 +2,7 @@ package provision
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
@@ -13,7 +14,7 @@ import (
 var (
 	errNeedGrpcEndpoint = fmt.Errorf("need grpc endpoint to use grpc provisioning")
 	//FIXME: underscores or dashes
-	grpcEndpoint = "provision_grpc_endpoint"
+	provisionGrpcEndpoint = flag.String("provision_grpc_endpoint", "", "Endpoint for gRPC server.")
 )
 type grpcProvisioner struct {}
 
@@ -42,7 +43,7 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 	defer cancel()
 
 	//FIXME: tls
-	conn, err := grpc.DialContext(dialTimeout, "localhost:9696", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(dialTimeout, *provisionGrpcEndpoint, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		//FIXME: better error
 		fmt.Errorf("dialing to provisioner timed out")
@@ -69,6 +70,8 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 	if err != nil {
 		return err
 	}
+
+	log.Info("pe code: " + string(pe.Code))
 
 	switch pe.Code {
 	case provision.Code_OK:
