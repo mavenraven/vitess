@@ -26,6 +26,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 	"vitess.io/vitess/go/mysql"
 	"vitess.io/vitess/go/test/endtoend/cluster"
 	"vitess.io/vitess/go/vt/log"
@@ -156,9 +157,10 @@ type testGrpcServer struct {}
 
 func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionError, error) {
 	log.Info("got request for keyspace: " + rckr.Keyspace)
-	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block until the
-	//the keyspace has been created.
+	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block while the
+	//the keyspace is being created.
 	go func() {
+		<- time.After(10 * time.Second)
 		err := clusterForProvisionTest.VtctlProcess.CreateKeyspace(rckr.Keyspace)
 		if err != nil {
 			log.Error(err)
