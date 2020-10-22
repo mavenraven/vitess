@@ -6,6 +6,7 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"time"
+	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/proto/provision"
 )
 
@@ -34,22 +35,31 @@ func newGRPCProvisioner(config map[string]string) (Provisioner, error){
 
 func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
 
+	log.Errorf("before dial")
+
 	//FIXME: cli option for endpont
-	conn, err := grpc.Dial("localhost:9696", grpc.WithInsecure(), grpc.WithBlock())
+	ctx, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, "localhost:9696", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		return err
+		//FIXME: better error
+		fmt.Errorf("connection to provisioner timed out")
 	}
+	defer conn.Close()
 
 	client := provision.NewProvisionClient(conn)
 	req := &provision.RequestCreateKeyspaceRequest{
 		Keyspace:             keyspace,
 	}
+
+	log.Errorf("before making request")
 	//FIXME: config values
 	//FIXME: tls
 	pe, err := client.RequestCreateKeyspace(
 		ctx,
 		req,
-		grpc_retry.WithMax(100),
+		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(
 			grpc_retry.BackoffLinear(1 * time.Second),
 		),

@@ -19,14 +19,11 @@ package sequence
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
-	"time"
 	"vitess.io/vitess/go/mysql"
-	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/test/endtoend/cluster"
 	"vitess.io/vitess/go/vt/proto/topodata"
 )
@@ -112,39 +109,10 @@ func TestProvisionKeyspace(t *testing.T) {
 	conn, err := mysql.Connect(ctx, &vtParams)
 	require.Nil(t, err)
 
-	results := make(chan sqltypes.Result)
-	defer close(results)
+	qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
+	require.Nil(t, err)
 
-	errors := make(chan error)
-	defer close(errors)
-
-	go func() {
-		qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
-		if err != nil {
-			errors <- err
-			return
-		}
-		results <- *qr
-	}()
-
-	for {
-		select {
-		case err = <-errors:
-			assert.FailNow(t,
-				"CREATE DATABASE took too long. Since CREATE DATABASE blocks until the keyspace is made, " +
-				"it is likely that this is a broken test. However, there is a possibility that the timeout before closing " +
-				"the connection is too low, and the test is flaking.",
-				err,
-			)
-		case result := <-results:
-			fmt.Printf("%v", result)
-			break
-		case <-time.After(10 * time.Second):
-			conn.Close()
-		}
-	}
-	fmt.Println("never gets here")
-	//	assert.Equal(t, 1, result.RowsAffected, "got the following back from vtgate instead: %v", result.Rows)
+	assert.Equal(t, 1, qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
 }
 
 /*
