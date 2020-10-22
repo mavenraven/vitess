@@ -38,13 +38,14 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 	log.Errorf("before dial")
 
 	//FIXME: cli option for endpont
-	ctx, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, "localhost:9696", grpc.WithInsecure(), grpc.WithBlock())
+	//FIXME: tls
+	conn, err := grpc.DialContext(dialTimeout, "localhost:9696", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		//FIXME: better error
-		fmt.Errorf("connection to provisioner timed out")
+		fmt.Errorf("dialing to provisioner timed out")
 	}
 	defer conn.Close()
 
@@ -53,12 +54,12 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 		Keyspace:             keyspace,
 	}
 
-	log.Errorf("before making request")
-	//FIXME: config values
-	//FIXME: tls
 	pe, err := client.RequestCreateKeyspace(
 		ctx,
 		req,
+		//FIXME: cli option
+		grpc_retry.WithPerRetryTimeout(5 * time.Second),
+		//FIXME: cli option
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(
 			grpc_retry.BackoffLinear(1 * time.Second),
