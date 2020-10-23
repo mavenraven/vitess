@@ -46,27 +46,18 @@ func TestMain(m *testing.M) {
 
 	exitCode := func() int {
 
-		//FIXME: more idiomatic way?
-		addrChan := make(chan net.Addr)
-		defer close(addrChan)
-
-		errorChan := make(chan error)
-		defer close(errorChan)
-
-		go func() {
-			err := startGrpcServer(context.Background(), addrChan)
-			if err != nil {
-				errorChan <- err
-			}
-		}()
-
-		var grpcServerAddress net.Addr
-		select {
-		case err := <-errorChan:
+		var lc net.ListenConfig
+		listener, err := lc.Listen(context.Background(), "tcp", "localhost:")
+		if err != nil {
 			log.Error(err)
 			return 1
-		case grpcServerAddress = <-addrChan:
 		}
+
+		defer listener.Close()
+
+		go func() {
+			log.Error(startProvisionerServer(listener))
+		}()
 
 		clusterForProvisionTest = cluster.NewCluster(cell, hostname)
 		//FIXME: underscores or dashes
@@ -75,8 +66,10 @@ func TestMain(m *testing.M) {
 			"%",
 			"-provisioner_type",
 			"grpc",
+			"-provisioner_timeout",
+			"30s",
 			"-provisioner_grpc_endpoint",
-			grpcServerAddress.String(),
+			listener.Addr().String(),
 			"-provisioner_grpc_dial_timeout",
 			"1s",
 			"-provisioner_grpc_per_retry_timeout",
@@ -162,20 +155,11 @@ func (_ testGrpcServer)RequestDeleteKeyspace(ctx context.Context, rckr *provisio
 	return &provision.ProvisionResponse{}, nil
 }
 
-func startGrpcServer(ctx context.Context, addr chan net.Addr) error {
-	var lc net.ListenConfig
-	listener, err := lc.Listen(ctx, "tcp", "localhost:")
-	if err != nil {
-		return err
-	}
-
-	defer listener.Close()
-
+func startProvisionerServer(listener net.Listener) error {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	defer grpcServer.Stop()
 
 	provision.RegisterProvisionServer(grpcServer, testGrpcServer{})
-	addr <- listener.Addr()
 	return grpcServer.Serve(listener)
 }

@@ -28,9 +28,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"vitess.io/vitess/go/vt/vtgate/provisionacl"
-
 	"vitess.io/vitess/go/vt/sysvars"
+	"vitess.io/vitess/go/vt/vtgate/provisionacl"
 
 	"golang.org/x/net/context"
 	"vitess.io/vitess/go/trace"

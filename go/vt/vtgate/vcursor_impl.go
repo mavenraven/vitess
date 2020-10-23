@@ -18,14 +18,13 @@ package vtgate
 
 import (
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
 	"vitess.io/vitess/go/vt/vtgate/provisionacl"
-
-	"golang.org/x/sync/errgroup"
 
 	"vitess.io/vitess/go/mysql"
 

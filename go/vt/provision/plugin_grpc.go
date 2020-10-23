@@ -38,7 +38,7 @@ func withOpenClient(ctx context.Context, callback func (client provision.Provisi
 	//FIXME: tls
 	conn, err := grpc.DialContext(dialTimeout, *provisionGrpcEndpoint, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		vterrors.Wrapf(err, "dialing to provisioner timed out")
+		vterrors.Wrapf(err, "dialing to grpc provisioner timed out")
 	}
 	defer conn.Close()
 
