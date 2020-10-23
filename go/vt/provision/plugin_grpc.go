@@ -3,7 +3,6 @@ package provision
 import (
 	"context"
 	"flag"
-	"fmt"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"time"
@@ -19,14 +18,17 @@ var (
 		"need grpc endpoint to use grpc provisioning",
 	)
 
+	//FIXME: docstrings
 	provisionGrpcEndpoint = flag.String("provisioner_grpc_endpoint", "", "")
 	provisionGrpcDialTimeout = flag.Duration("provisioner_grpc_dial_timeout", time.Duration(5 * time.Second), "")
 	provisionGrpcRequestTimeout = flag.Duration("provisioner_grpc_per_retry_timeout", time.Duration(5 * time.Second), "")
 	provisionGrpcMaxRetries = flag.Uint("provisioner_grpc_max_retries", 3, "")
+
+
 )
 type grpcProvisioner struct {}
 
-func (p grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
+func withOpenClient(ctx context.Context, callback func (client provision.ProvisionClient) error) error {
 	if *provisionGrpcEndpoint == "" {
 		return ErrNeedGrpcEndpoint
 	}
@@ -40,55 +42,48 @@ func (p grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace str
 	}
 	defer conn.Close()
 
-	client := provision.NewProvisionClient(conn)
-	req := &provision.RequestCreateKeyspaceRequest{
-		Keyspace:             keyspace,
-	}
+	return callback(provision.NewProvisionClient(conn))
+}
 
-	_, err = client.RequestCreateKeyspace(
-		ctx,
-		req,
-		grpc_retry.WithPerRetryTimeout(*provisionGrpcRequestTimeout),
-		grpc_retry.WithMax(*provisionGrpcMaxRetries),
-		grpc_retry.WithBackoff(
-			grpc_retry.BackoffLinear(1 * time.Second),
-		),
-	)
 
-	return err
+func (p grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
+	return withOpenClient(ctx, func(client provision.ProvisionClient) error {
+		req := &provision.RequestCreateKeyspaceRequest{
+			Keyspace:             keyspace,
+		}
+
+		_, err := client.RequestCreateKeyspace(
+			ctx,
+			req,
+			grpc_retry.WithPerRetryTimeout(*provisionGrpcRequestTimeout),
+			grpc_retry.WithMax(*provisionGrpcMaxRetries),
+			grpc_retry.WithBackoff(
+				grpc_retry.BackoffLinear(1 * time.Second),
+			),
+		)
+
+		return err
+	})
 }
 
 func (p grpcProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
-	//FIXME: cli option for endpont
-	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
-	defer cancel()
+	return withOpenClient(ctx, func(client provision.ProvisionClient) error {
+		req := &provision.RequestDeleteKeyspaceRequest{
+			Keyspace:             keyspace,
+		}
 
-	//FIXME: tls
-	conn, err := grpc.DialContext(dialTimeout, *provisionGrpcEndpoint, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		//FIXME: better error
-		fmt.Errorf("dialing to provisioner timed out")
-	}
-	defer conn.Close()
+		_, err := client.RequestDeleteKeyspace(
+			ctx,
+			req,
+			grpc_retry.WithPerRetryTimeout(*provisionGrpcRequestTimeout),
+			grpc_retry.WithMax(*provisionGrpcMaxRetries),
+			grpc_retry.WithBackoff(
+				grpc_retry.BackoffLinear(1 * time.Second),
+			),
+		)
 
-	client := provision.NewProvisionClient(conn)
-	req := &provision.RequestDeleteKeyspaceRequest{
-		Keyspace:             keyspace,
-	}
-
-	_, err = client.RequestDeleteKeyspace(
-		ctx,
-		req,
-		//FIXME: cli option
-		grpc_retry.WithPerRetryTimeout(5 * time.Second),
-		//FIXME: cli option
-		grpc_retry.WithMax(3),
-		grpc_retry.WithBackoff(
-			grpc_retry.BackoffLinear(1 * time.Second),
-		),
-	)
-
-	return err
+		return err
+	})
 }
 
 func init() {

@@ -170,8 +170,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
 				keyspace,
 				)
-		//FIXME: make configurable
-		case <-time.After(30 * time.Second):
+		case <-time.After(*provision.ProvisionerTimeout):
 			return vterrors.Errorf(
 				vtrpcpb.Code_DEADLINE_EXCEEDED,
 				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
@@ -221,8 +220,7 @@ func (vc *vcursorImpl) ExecuteDeleteKeyspace(keyspace string, ifExists bool) err
 				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
 				keyspace,
 			)
-		//FIXME: make configurable
-		case <-time.After(30 * time.Second):
+		case <-time.After(*provision.ProvisionerTimeout):
 			return vterrors.Errorf(
 				vtrpcpb.Code_DEADLINE_EXCEEDED,
 				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
