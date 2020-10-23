@@ -115,7 +115,7 @@ func TestProvisionKeyspace(t *testing.T) {
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
-
+	/*
 	dropStatement := fmt.Sprintf("DROP DATABASE %s;", keyspace)
 	qr, err = conn.ExecuteFetch(dropStatement, 10, true)
 	require.Nil(t, err)
@@ -125,6 +125,7 @@ func TestProvisionKeyspace(t *testing.T) {
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
+*/
 }
 
 type testGrpcServer struct {}

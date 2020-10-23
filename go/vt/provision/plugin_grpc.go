@@ -35,9 +35,6 @@ func newGRPCProvisioner(config map[string]string) (Provisioner, error){
 }
 
 func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
-
-	log.Errorf("before dial")
-
 	//FIXME: cli option for endpont
 	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
 	defer cancel()

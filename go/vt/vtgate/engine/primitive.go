@@ -84,7 +84,7 @@ type (
 
 		ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL) error
 		ExecuteCreateKeyspace(keyspace string, ifNotExists bool) error
-		ExecuteDeleteeyspace(keyspace string, ifExists bool) error
+		ExecuteDeleteKeyspace(keyspace string, ifExists bool) error
 
 		SubmitOnlineDDL(onlineDDl *schema.OnlineDDL) error
 
