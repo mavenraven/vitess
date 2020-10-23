@@ -48,7 +48,6 @@ var (
 								keyspace_id bigint(20) unsigned NOT NULL,
 								primary key (id)
 								) Engine=InnoDB`
-	grpcServerAddress net.Addr
 )
 
 func TestMain(m *testing.M) {
@@ -57,6 +56,7 @@ func TestMain(m *testing.M) {
 
 	exitCode := func() int {
 
+		//FIXME: more idiomatic way?
 		addrChan := make(chan net.Addr)
 		defer close(addrChan)
 
@@ -64,12 +64,13 @@ func TestMain(m *testing.M) {
 		defer close(errorChan)
 
 		go func() {
-			err := startGrpcServer(context.TODO(), addrChan)
+			err := startGrpcServer(context.Background(), addrChan)
 			if err != nil {
 				errorChan <- err
 			}
 		}()
 
+		var grpcServerAddress net.Addr
 		select {
 		case err := <-errorChan:
 			log.Error(err)
