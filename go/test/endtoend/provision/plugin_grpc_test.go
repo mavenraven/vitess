@@ -19,7 +19,6 @@ package sequence
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -131,7 +130,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestProvisionKeyspace(t *testing.T) {
-	fmt.Println(grpcServerAddress)
 	defer cluster.PanicHandler(t)
 
 	ctx := context.Background()

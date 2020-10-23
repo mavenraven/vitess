@@ -22,7 +22,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/provision"
 	keyspaceacl "vitess.io/vitess/go/vt/vtgate/provisionacl"
 
@@ -146,20 +145,14 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	}
 
 	checkKeyspaceExists := func() (bool, error) {
-		log.Errorf("hi from inside")
-		//FIXME: Get them all because there's nothing in the topo api for GetKeyspace to return whether it keyspaceExists?
-		keyspaces, err := vc.topoServer.GetKeyspaces(vc.ctx)
-		if err != nil {
-			return false, vterrors.Wrapf(err, "vc.topServer.GetKeyspaces")
+		_, err := vc.topoServer.GetKeyspace(vc.ctx, keyspace)
+		if err == nil {
+			return true, nil
 		}
-
-		for _, k := range keyspaces {
-			if k == keyspace {
-				return true, nil
-			}
+		if topo.IsErrType(err, topo.NoNode) {
+			return false, nil
 		}
-
-		return false, nil
+		return false, err
 	}
 
 	keyspaceExists, err := checkKeyspaceExists()
@@ -197,7 +190,6 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 			if err != nil {
 				return err
 			}
-
 			if exists {
 				return nil
 			}
