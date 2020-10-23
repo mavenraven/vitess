@@ -18,11 +18,26 @@ var (
 		"need grpc endpoint to use grpc provisioning",
 	)
 
-	//FIXME: docstrings
-	provisionGrpcEndpoint = flag.String("provision_grpc_endpoint", "", "")
-	provisionGrpcDialTimeout = flag.Duration("provision_grpc_dial_timeout", time.Duration(5 * time.Second), "")
-	provisionGrpcRequestTimeout = flag.Duration("provision_grpc_per_retry_timeout", time.Duration(5 * time.Second), "")
-	provisionGrpcMaxRetries = flag.Uint("provision_grpc_max_retries", 3, "")
+	provisionGrpcEndpoint = flag.String(
+		"provision_grpc_endpoint",
+		"",
+		"gRPC endpoint to connect to. This is required if `grpc` is specified for `-provision_type`.",
+		)
+	provisionGrpcDialTimeout = flag.Duration(
+		"provision_grpc_dial_timeout",
+		time.Duration(5 * time.Second),
+		"Maximum time to try connecting to the gRPC endpoint before timing out.",
+	)
+	provisionGrpcRequestTimeout = flag.Duration(
+		"provision_grpc_per_retry_timeout",
+		time.Duration(5 * time.Second),
+		"Maximum time to wait for a provision request to before timing out.",
+	)
+	provisionGrpcMaxRetries = flag.Uint(
+		"provision_grpc_max_retries",
+		3,
+		"Maximum times to try sending a provision request.",
+	)
 
 
 )

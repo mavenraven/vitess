@@ -167,13 +167,13 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 		case <- vc.ctx.Done():
 			return vterrors.Errorf(
 				vtrpcpb.Code_ABORTED,
-				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
+				"waiting for creation of keyspace %v cancelled. provisioning will continue asynchronously.",
 				keyspace,
 				)
 		case <-time.After(*provision.ProvisionerTimeout):
 			return vterrors.Errorf(
 				vtrpcpb.Code_DEADLINE_EXCEEDED,
-				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
+				"waiting for creation of keyspace %v timed out. provisioning will continue asynchronously.",
 				keyspace,
 			)
 		case <-time.After(5 * time.Second):
@@ -217,13 +217,13 @@ func (vc *vcursorImpl) ExecuteDeleteKeyspace(keyspace string, ifExists bool) err
 		case <- vc.ctx.Done():
 			return vterrors.Errorf(
 				vtrpcpb.Code_ABORTED,
-				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
+				"waiting for deletion of keyspace %v cancelled. provisioning will continue asynchronously.",
 				keyspace,
 			)
 		case <-time.After(*provision.ProvisionerTimeout):
 			return vterrors.Errorf(
 				vtrpcpb.Code_DEADLINE_EXCEEDED,
-				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
+				"waiting for deletion of keyspace %v timed out. provisioning will continue asynchronously.",
 				keyspace,
 			)
 		case <-time.After(5 * time.Second):

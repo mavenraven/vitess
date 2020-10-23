@@ -27,8 +27,18 @@ import (
 
 var (
 	//FIXME: _ or -, docstrings
-	provisionerType = flag.String("provision_type", "noop", "")
-	ProvisionerTimeout = flag.Duration("provision_timeout", time.Duration(5 * time.Minute), "")
+	provisionerType = flag.String(
+		"provision_type",
+		"noop",
+		"Specifies which provision implementation to use. Available options are: noop, grpc.",
+	)
+	ProvisionerTimeout = flag.Duration(
+		"provision_timeout",
+		time.Duration(5 * time.Minute),
+		"Database DDL statements are synchronous from the perspective of a connected user. This specifies" +
+			"the maximum time to wait before returning an error. Note that this the ONLY has an effect on the user" +
+			" experience. The actual provision operation runs asynchronously for an unbounded amount of time.",
+	)
 )
 
 /*
