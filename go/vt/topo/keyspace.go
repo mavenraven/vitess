@@ -171,6 +171,7 @@ func (ts *Server) CreateKeyspace(ctx context.Context, keyspace string, value *to
 	return nil
 }
 
+
 // GetKeyspace reads the given keyspace and returns it
 func (ts *Server) GetKeyspace(ctx context.Context, keyspace string) (*KeyspaceInfo, error) {
 	keyspacePath := path.Join(KeyspacesPath, keyspace, KeyspaceFile)
@@ -189,6 +190,18 @@ func (ts *Server) GetKeyspace(ctx context.Context, keyspace string) (*KeyspaceIn
 		version:  version,
 		Keyspace: k,
 	}, nil
+}
+
+// KeyspaceExists returns whether a keyspace exists in the topo server.
+func (ts *Server) KeyspaceExists(ctx context.Context, keyspace string) (bool, error) {
+	_, err := ts.GetKeyspace(ctx, keyspace)
+	if err == nil {
+		return true, nil
+	}
+	if IsErrType(err, NoNode) {
+		return false, nil
+	}
+	return false, err
 }
 
 // UpdateKeyspace updates the keyspace data. It checks the keyspace is locked.

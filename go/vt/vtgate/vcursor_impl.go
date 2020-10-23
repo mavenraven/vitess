@@ -23,7 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
-	keyspaceacl "vitess.io/vitess/go/vt/vtgate/provisionacl"
+	"vitess.io/vitess/go/vt/vtgate/provisionacl"
 
 	"golang.org/x/sync/errgroup"
 
@@ -139,23 +139,11 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 }
 
 func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) error {
-	allowed := keyspaceacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
+	allowed := provisionacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
 	if !allowed {
-		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform keyspace operations")
+		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision operations")
 	}
-
-	checkKeyspaceExists := func() (bool, error) {
-		_, err := vc.topoServer.GetKeyspace(vc.ctx, keyspace)
-		if err == nil {
-			return true, nil
-		}
-		if topo.IsErrType(err, topo.NoNode) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	keyspaceExists, err := checkKeyspaceExists()
+	keyspaceExists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
 	if err != nil {
 		return err
 	}
@@ -165,8 +153,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	}
 
 	if keyspaceExists {
-		//FIXME: better error
-		return vterrors.New(vtrpcpb.Code_ALREADY_EXISTS, fmt.Sprintf("keyspace %v already exists", keyspace))
+		return vterrors.Errorf(vtrpcpb.Code_ALREADY_EXISTS, "keyspace %v already exists", keyspace)
 	}
 
 	err = provision.RequestCreateKeyspace(vc.ctx, keyspace)
@@ -177,16 +164,20 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	for {
 		select {
 		case <- vc.ctx.Done():
-			//FIXME: better error
-			return fmt.Errorf("got cancelled")
+			return vterrors.Errorf(
+				vtrpcpb.Code_ABORTED,
+				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
+				keyspace,
+				)
 		//FIXME: make configurable
 		case <-time.After(30 * time.Second):
-			//FIXME: better error
-			return fmt.Errorf("deadline expired")
-			//FIXME: reasonable sleep time?
-			//FIXME: use WatchSrveKeyspace instead? seems like a race condition though...
+			return vterrors.Errorf(
+				vtrpcpb.Code_DEADLINE_EXCEEDED,
+				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
+				keyspace,
+			)
 		case <-time.After(5 * time.Second):
-			exists, err := checkKeyspaceExists()
+			exists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
 			if err != nil {
 				return err
 			}
