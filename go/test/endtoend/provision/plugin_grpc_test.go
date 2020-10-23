@@ -115,7 +115,7 @@ func TestProvisionKeyspace(t *testing.T) {
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
-	/*
+
 	dropStatement := fmt.Sprintf("DROP DATABASE %s;", keyspace)
 	qr, err = conn.ExecuteFetch(dropStatement, 10, true)
 	require.Nil(t, err)
@@ -123,14 +123,14 @@ func TestProvisionKeyspace(t *testing.T) {
 	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
 
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
-	//If GetKeyspace doesn't return an error, the keyspace exists.
-	require.Nil(t, err)
-*/
+	//If GetKeyspace does return an error, we assume it's because the keyspace no longer exists, and not because of
+	//a network error.
+	assert.True(t, err != nil, "keyspace %s was not deleted", keyspace)
 }
 
 type testGrpcServer struct {}
 
-func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionError, error) {
+func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionResponse, error) {
 	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block while the
 	//the keyspace is being created.
 	go func() {
@@ -140,9 +140,21 @@ func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provisio
 			log.Error(err)
 		}
 	}()
-	return &provision.ProvisionError{Code: provision.Code_OK}, nil
+	return &provision.ProvisionResponse{}, nil
 }
 
+func (_ testGrpcServer)RequestDeleteKeyspace(ctx context.Context, rckr *provision.RequestDeleteKeyspaceRequest) (*provision.ProvisionResponse, error) {
+	//We're doing this in a go routine to simulate the fact that RequestDeleteKeyspace does not block while the
+	//the keyspace is being deleted.
+	go func() {
+		<- time.After(10 * time.Second)
+		err := clusterForProvisionTest.VtctlProcess.DeleteKeyspace(rckr.Keyspace)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+	return &provision.ProvisionResponse{}, nil
+}
 
 func startGrpcServer(ctx context.Context, addr chan net.Addr) error {
 	var lc net.ListenConfig

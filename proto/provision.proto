@@ -19,20 +19,18 @@ option go_package = "vitess.io/vitess/go/vt/proto/provision";
 package provision;
 
 service Provision {
-  rpc RequestCreateKeyspace(RequestCreateKeyspaceRequest) returns (ProvisionError);
+  rpc RequestCreateKeyspace(RequestCreateKeyspaceRequest) returns (ProvisionResponse);
+  rpc RequestDeleteKeyspace(RequestDeleteKeyspaceRequest) returns (ProvisionResponse);
 }
-
 
 message RequestCreateKeyspaceRequest {
   string keyspace = 1;
 }
 
-message ProvisionError {
-  string message = 1;
-  Code code = 2;
+message RequestDeleteKeyspaceRequest {
+  string keyspace = 1;
 }
 
-enum Code {
-  OK = 0;
-  UNKNOWN = 1;
+message ProvisionResponse {
 }
+

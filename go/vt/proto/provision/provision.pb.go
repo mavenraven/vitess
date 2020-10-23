@@ -25,31 +25,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type Code int32
-
-const (
-	Code_OK      Code = 0
-	Code_UNKNOWN Code = 1
-)
-
-var Code_name = map[int32]string{
-	0: "OK",
-	1: "UNKNOWN",
-}
-
-var Code_value = map[string]int32{
-	"OK":      0,
-	"UNKNOWN": 1,
-}
-
-func (x Code) String() string {
-	return proto.EnumName(Code_name, int32(x))
-}
-
-func (Code) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_3500c3a98af60624, []int{0}
-}
-
 type RequestCreateKeyspaceRequest struct {
 	Keyspace             string   `protobuf:"bytes,1,opt,name=keyspace,proto3" json:"keyspace,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -89,78 +64,98 @@ func (m *RequestCreateKeyspaceRequest) GetKeyspace() string {
 	return ""
 }
 
-type ProvisionError struct {
-	Message              string   `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	Code                 Code     `protobuf:"varint,2,opt,name=code,proto3,enum=provision.Code" json:"code,omitempty"`
+type RequestDeleteKeyspaceRequest struct {
+	Keyspace             string   `protobuf:"bytes,1,opt,name=keyspace,proto3" json:"keyspace,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProvisionError) Reset()         { *m = ProvisionError{} }
-func (m *ProvisionError) String() string { return proto.CompactTextString(m) }
-func (*ProvisionError) ProtoMessage()    {}
-func (*ProvisionError) Descriptor() ([]byte, []int) {
+func (m *RequestDeleteKeyspaceRequest) Reset()         { *m = RequestDeleteKeyspaceRequest{} }
+func (m *RequestDeleteKeyspaceRequest) String() string { return proto.CompactTextString(m) }
+func (*RequestDeleteKeyspaceRequest) ProtoMessage()    {}
+func (*RequestDeleteKeyspaceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3500c3a98af60624, []int{1}
 }
 
-func (m *ProvisionError) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProvisionError.Unmarshal(m, b)
+func (m *RequestDeleteKeyspaceRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestDeleteKeyspaceRequest.Unmarshal(m, b)
 }
-func (m *ProvisionError) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProvisionError.Marshal(b, m, deterministic)
+func (m *RequestDeleteKeyspaceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestDeleteKeyspaceRequest.Marshal(b, m, deterministic)
 }
-func (m *ProvisionError) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProvisionError.Merge(m, src)
+func (m *RequestDeleteKeyspaceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestDeleteKeyspaceRequest.Merge(m, src)
 }
-func (m *ProvisionError) XXX_Size() int {
-	return xxx_messageInfo_ProvisionError.Size(m)
+func (m *RequestDeleteKeyspaceRequest) XXX_Size() int {
+	return xxx_messageInfo_RequestDeleteKeyspaceRequest.Size(m)
 }
-func (m *ProvisionError) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProvisionError.DiscardUnknown(m)
+func (m *RequestDeleteKeyspaceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestDeleteKeyspaceRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProvisionError proto.InternalMessageInfo
+var xxx_messageInfo_RequestDeleteKeyspaceRequest proto.InternalMessageInfo
 
-func (m *ProvisionError) GetMessage() string {
+func (m *RequestDeleteKeyspaceRequest) GetKeyspace() string {
 	if m != nil {
-		return m.Message
+		return m.Keyspace
 	}
 	return ""
 }
 
-func (m *ProvisionError) GetCode() Code {
-	if m != nil {
-		return m.Code
-	}
-	return Code_OK
+type ProvisionResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
+func (m *ProvisionResponse) Reset()         { *m = ProvisionResponse{} }
+func (m *ProvisionResponse) String() string { return proto.CompactTextString(m) }
+func (*ProvisionResponse) ProtoMessage()    {}
+func (*ProvisionResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3500c3a98af60624, []int{2}
+}
+
+func (m *ProvisionResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProvisionResponse.Unmarshal(m, b)
+}
+func (m *ProvisionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProvisionResponse.Marshal(b, m, deterministic)
+}
+func (m *ProvisionResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProvisionResponse.Merge(m, src)
+}
+func (m *ProvisionResponse) XXX_Size() int {
+	return xxx_messageInfo_ProvisionResponse.Size(m)
+}
+func (m *ProvisionResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProvisionResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProvisionResponse proto.InternalMessageInfo
+
 func init() {
-	proto.RegisterEnum("provision.Code", Code_name, Code_value)
 	proto.RegisterType((*RequestCreateKeyspaceRequest)(nil), "provision.RequestCreateKeyspaceRequest")
-	proto.RegisterType((*ProvisionError)(nil), "provision.ProvisionError")
+	proto.RegisterType((*RequestDeleteKeyspaceRequest)(nil), "provision.RequestDeleteKeyspaceRequest")
+	proto.RegisterType((*ProvisionResponse)(nil), "provision.ProvisionResponse")
 }
 
 func init() { proto.RegisterFile("provision.proto", fileDescriptor_3500c3a98af60624) }
 
 var fileDescriptor_3500c3a98af60624 = []byte{
-	// 225 bytes of a gzipped FileDescriptorProto
+	// 183 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2f, 0x28, 0xca, 0x2f,
 	0xcb, 0x2c, 0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x84, 0x0b, 0x28,
 	0x59, 0x71, 0xc9, 0x04, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x38, 0x17, 0xa5, 0x26, 0x96, 0xa4,
 	0x7a, 0xa7, 0x56, 0x16, 0x17, 0x24, 0x26, 0xa7, 0x42, 0x05, 0x85, 0xa4, 0xb8, 0x38, 0xb2, 0xa1,
-	0x42, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x70, 0xbe, 0x92, 0x3f, 0x17, 0x5f, 0x00, 0xcc,
-	0x20, 0xd7, 0xa2, 0xa2, 0xfc, 0x22, 0x21, 0x09, 0x2e, 0xf6, 0xdc, 0xd4, 0xe2, 0xe2, 0xc4, 0x74,
-	0x98, 0x62, 0x18, 0x57, 0x48, 0x99, 0x8b, 0x25, 0x39, 0x3f, 0x25, 0x55, 0x82, 0x49, 0x81, 0x51,
-	0x83, 0xcf, 0x88, 0x5f, 0x0f, 0xe1, 0x24, 0xe7, 0xfc, 0x94, 0xd4, 0x20, 0xb0, 0xa4, 0x96, 0x34,
-	0x17, 0x0b, 0x88, 0x27, 0xc4, 0xc6, 0xc5, 0xe4, 0xef, 0x2d, 0xc0, 0x20, 0xc4, 0xcd, 0xc5, 0x1e,
-	0xea, 0xe7, 0xed, 0xe7, 0x1f, 0xee, 0x27, 0xc0, 0x68, 0x94, 0xc1, 0xc5, 0x09, 0xb7, 0x4d, 0x28,
-	0x9a, 0x4b, 0x14, 0xab, 0xb3, 0x85, 0xd4, 0x91, 0x4c, 0xc6, 0xe7, 0x31, 0x29, 0x49, 0x24, 0x85,
-	0xa8, 0xbe, 0x70, 0xd2, 0x88, 0x52, 0x2b, 0xcb, 0x2c, 0x49, 0x2d, 0x2e, 0xd6, 0xcb, 0xcc, 0xd7,
-	0x87, 0xb0, 0xf4, 0xd3, 0xf3, 0xf5, 0xcb, 0x4a, 0xf4, 0xc1, 0xc1, 0xa7, 0x0f, 0xd7, 0x98, 0xc4,
-	0x06, 0x16, 0x30, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xb9, 0x85, 0xe6, 0x77, 0x62, 0x01, 0x00,
-	0x00,
+	0x42, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x70, 0x3e, 0x92, 0x5e, 0x97, 0xd4, 0x9c, 0x54,
+	0xd2, 0xf4, 0x0a, 0x73, 0x09, 0x06, 0xc0, 0x1c, 0x11, 0x94, 0x5a, 0x5c, 0x90, 0x9f, 0x57, 0x9c,
+	0x6a, 0x74, 0x9a, 0x91, 0x8b, 0x13, 0x2e, 0x2a, 0x14, 0xc7, 0x25, 0x8a, 0xd5, 0x69, 0x42, 0xea,
+	0x7a, 0x08, 0x0f, 0xe1, 0x73, 0xbc, 0x94, 0x0c, 0x92, 0x42, 0x0c, 0xdb, 0x90, 0xcc, 0x47, 0x75,
+	0x3e, 0x36, 0xf3, 0xb1, 0x7a, 0x10, 0xbf, 0xf9, 0x4e, 0x1a, 0x51, 0x6a, 0x65, 0x99, 0x25, 0xa9,
+	0xc5, 0xc5, 0x7a, 0x99, 0xf9, 0xfa, 0x10, 0x96, 0x7e, 0x7a, 0xbe, 0x7e, 0x59, 0x89, 0x3e, 0x38,
+	0x16, 0xf4, 0xe1, 0x7a, 0x93, 0xd8, 0xc0, 0x02, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x59,
+	0x3f, 0x10, 0x8e, 0xa9, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -175,7 +170,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ProvisionClient interface {
-	RequestCreateKeyspace(ctx context.Context, in *RequestCreateKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionError, error)
+	RequestCreateKeyspace(ctx context.Context, in *RequestCreateKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionResponse, error)
+	RequestDeleteKeyspace(ctx context.Context, in *RequestDeleteKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionResponse, error)
 }
 
 type provisionClient struct {
@@ -186,9 +182,18 @@ func NewProvisionClient(cc *grpc.ClientConn) ProvisionClient {
 	return &provisionClient{cc}
 }
 
-func (c *provisionClient) RequestCreateKeyspace(ctx context.Context, in *RequestCreateKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionError, error) {
-	out := new(ProvisionError)
+func (c *provisionClient) RequestCreateKeyspace(ctx context.Context, in *RequestCreateKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionResponse, error) {
+	out := new(ProvisionResponse)
 	err := c.cc.Invoke(ctx, "/provision.Provision/RequestCreateKeyspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *provisionClient) RequestDeleteKeyspace(ctx context.Context, in *RequestDeleteKeyspaceRequest, opts ...grpc.CallOption) (*ProvisionResponse, error) {
+	out := new(ProvisionResponse)
+	err := c.cc.Invoke(ctx, "/provision.Provision/RequestDeleteKeyspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,15 +202,19 @@ func (c *provisionClient) RequestCreateKeyspace(ctx context.Context, in *Request
 
 // ProvisionServer is the server API for Provision service.
 type ProvisionServer interface {
-	RequestCreateKeyspace(context.Context, *RequestCreateKeyspaceRequest) (*ProvisionError, error)
+	RequestCreateKeyspace(context.Context, *RequestCreateKeyspaceRequest) (*ProvisionResponse, error)
+	RequestDeleteKeyspace(context.Context, *RequestDeleteKeyspaceRequest) (*ProvisionResponse, error)
 }
 
 // UnimplementedProvisionServer can be embedded to have forward compatible implementations.
 type UnimplementedProvisionServer struct {
 }
 
-func (*UnimplementedProvisionServer) RequestCreateKeyspace(ctx context.Context, req *RequestCreateKeyspaceRequest) (*ProvisionError, error) {
+func (*UnimplementedProvisionServer) RequestCreateKeyspace(ctx context.Context, req *RequestCreateKeyspaceRequest) (*ProvisionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestCreateKeyspace not implemented")
+}
+func (*UnimplementedProvisionServer) RequestDeleteKeyspace(ctx context.Context, req *RequestDeleteKeyspaceRequest) (*ProvisionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestDeleteKeyspace not implemented")
 }
 
 func RegisterProvisionServer(s *grpc.Server, srv ProvisionServer) {
@@ -230,6 +239,24 @@ func _Provision_RequestCreateKeyspace_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Provision_RequestDeleteKeyspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestDeleteKeyspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvisionServer).RequestDeleteKeyspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/provision.Provision/RequestDeleteKeyspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvisionServer).RequestDeleteKeyspace(ctx, req.(*RequestDeleteKeyspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Provision_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "provision.Provision",
 	HandlerType: (*ProvisionServer)(nil),
@@ -237,6 +264,10 @@ var _Provision_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RequestCreateKeyspace",
 			Handler:    _Provision_RequestCreateKeyspace_Handler,
+		},
+		{
+			MethodName: "RequestDeleteKeyspace",
+			Handler:    _Provision_RequestDeleteKeyspace_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,7 +7,6 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"time"
-	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/proto/provision"
 )
 
@@ -52,7 +51,7 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 		Keyspace:             keyspace,
 	}
 
-	pe, err := client.RequestCreateKeyspace(
+	_, err = client.RequestCreateKeyspace(
 		ctx,
 		req,
 		//FIXME: cli option
@@ -64,26 +63,40 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 		),
 	)
 
-	if err != nil {
-		return err
-	}
-
-	log.Info("pe code: " + string(pe.Code))
-
-	switch pe.Code {
-	case provision.Code_OK:
-		return nil
-	case provision.Code_UNKNOWN:
-		//FIXME: better error
-		return fmt.Errorf("unknown error")
-	default:
-		//FIXME: better error
-		return fmt.Errorf("unhandled grpc case")
-	}
+	return err
 }
 
 func (p *grpcProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
-	return nil
+	//FIXME: cli option for endpont
+	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	defer cancel()
+
+	//FIXME: tls
+	conn, err := grpc.DialContext(dialTimeout, *provisionGrpcEndpoint, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		//FIXME: better error
+		fmt.Errorf("dialing to provisioner timed out")
+	}
+	defer conn.Close()
+
+	client := provision.NewProvisionClient(conn)
+	req := &provision.RequestDeleteKeyspaceRequest{
+		Keyspace:             keyspace,
+	}
+
+	_, err = client.RequestDeleteKeyspace(
+		ctx,
+		req,
+		//FIXME: cli option
+		grpc_retry.WithPerRetryTimeout(5 * time.Second),
+		//FIXME: cli option
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(
+			grpc_retry.BackoffLinear(1 * time.Second),
+		),
+	)
+
+	return err
 }
 
 func init() {

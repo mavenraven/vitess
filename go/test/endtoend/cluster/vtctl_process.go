@@ -74,7 +74,7 @@ func (vtctl *VtctlProcess) CreateKeyspace(keyspace string) (err error) {
 }
 
 // DeleteKeyspace executes vtctl command to create keyspace
-func (vtctl *VtctlProcess) deleteKeyspace(keyspace string) (err error) {
+func (vtctl *VtctlProcess) DeleteKeyspace(keyspace string) (err error) {
 	tmpProcess := exec.Command(
 		vtctl.Binary,
 		"-topo_implementation", vtctl.TopoImplementation,
