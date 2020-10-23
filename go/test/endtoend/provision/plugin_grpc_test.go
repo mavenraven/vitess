@@ -30,23 +30,13 @@ import (
 	"vitess.io/vitess/go/test/endtoend/cluster"
 	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/proto/provision"
-	"vitess.io/vitess/go/vt/proto/topodata"
 )
 
 var (
 	clusterForProvisionTest *cluster.LocalProcessCluster
-	keyspaceShardedName     = "test_ks_sharded"
-	keyspaceUnshardedName   = "test_ks_unsharded"
 	cell                    = "zone1"
 	cell2                   = "zone2"
 	hostname                = "localhost"
-	servedTypes             = map[topodata.TabletType]bool{topodata.TabletType_MASTER: true, topodata.TabletType_REPLICA: true, topodata.TabletType_RDONLY: true}
-	sqlSchema               = `create table vt_insert_test (
-								id bigint auto_increment,
-								msg varchar(64),
-								keyspace_id bigint(20) unsigned NOT NULL,
-								primary key (id)
-								) Engine=InnoDB`
 )
 
 func TestMain(m *testing.M) {
@@ -90,39 +80,13 @@ func TestMain(m *testing.M) {
 
 		defer clusterForProvisionTest.Teardown()
 
-		// Start topo server
 		if err := clusterForProvisionTest.StartTopo(); err != nil {
 			return 1
 		}
 
-		if err := clusterForProvisionTest.TopoProcess.ManageTopoDir("mkdir", "/vitess/"+cell2); err != nil {
-			return 1
-		}
-
-		if err := clusterForProvisionTest.VtctlProcess.AddCellInfo(cell2); err != nil {
-			return 1
-		}
-
-
-		keyspaceUnsharded := &cluster.Keyspace{
-			Name:      keyspaceUnshardedName,
-			SchemaSQL: sqlSchema,
-		}
-		if err := clusterForProvisionTest.StartKeyspace(*keyspaceUnsharded, []string{keyspaceUnshardedName}, 1, false); err != nil {
-			return 1
-		}
-		if err := clusterForProvisionTest.VtctlclientProcess.ExecuteCommand("SetKeyspaceShardingInfo", "-force", keyspaceUnshardedName, "keyspace_id", "uint64"); err != nil {
-			return 1
-		}
-		if err := clusterForProvisionTest.VtctlclientProcess.ExecuteCommand("RebuildKeyspaceGraph", keyspaceUnshardedName); err != nil {
-			return 1
-		}
-
-		// Start vtgate
 		if err := clusterForProvisionTest.StartVtgate(); err != nil {
 			return 1
 		}
-
 
 		return m.Run()
 	}()
@@ -141,7 +105,9 @@ func TestProvisionKeyspace(t *testing.T) {
 	conn, err := mysql.Connect(ctx, &vtParams)
 	require.Nil(t, err)
 
-	log.Info(clusterForProvisionTest.Keyspaces)
+//	createStatement := fmt.Sprintf("CREATE DATABSE %s", )
+
+
 	qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
 	require.Nil(t, err)
 
@@ -150,12 +116,24 @@ func TestProvisionKeyspace(t *testing.T) {
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", "my_keyspace")
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
+
+	/*
+	qr, err := conn.ExecuteFetch("DELETE DATABASE my_keyspace;", 10, true)
+	require.Nil(t, err)
+
+	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
+
+	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", "my_keyspace")
+	//If GetKeyspace doesn't return an error, the keyspace exists.
+	require.Nil(t, err)
+
+	 */
+
 }
 
 type testGrpcServer struct {}
 
 func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionError, error) {
-	log.Info("got request for keyspace: " + rckr.Keyspace)
 	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block while the
 	//the keyspace is being created.
 	go func() {
