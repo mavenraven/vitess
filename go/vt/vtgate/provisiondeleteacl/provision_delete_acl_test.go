@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provisionacl
+package provisiondeleteacl
 
 import (
 	"testing"
@@ -26,7 +26,6 @@ func TestProvisionAcl(t *testing.T) {
 	redUser := querypb.VTGateCallerID{Username: "redUser"}
 	yellowUser := querypb.VTGateCallerID{Username: "yellowUser"}
 
-	// By default no users are allowed in
 	if Authorized(&redUser) {
 		t.Errorf("user should not be authorized")
 	}
@@ -34,8 +33,7 @@ func TestProvisionAcl(t *testing.T) {
 		t.Errorf("user should not be authorized")
 	}
 
-	// Test wildcard
-	*ProvisionAuthorizedUsers = "%"
+	*provisionAuthorizedUsers = "%"
 	Init()
 
 	if !Authorized(&redUser) {
@@ -45,8 +43,7 @@ func TestProvisionAcl(t *testing.T) {
 		t.Errorf("user should be authorized")
 	}
 
-	// Test user list
-	*ProvisionAuthorizedUsers = "oneUser, twoUser, redUser, blueUser"
+	*provisionAuthorizedUsers = "oneUser, twoUser, redUser, blueUser"
 	Init()
 
 	if !Authorized(&redUser) {
@@ -56,11 +53,9 @@ func TestProvisionAcl(t *testing.T) {
 		t.Errorf("user should not be authorized")
 	}
 
-	// Revert to baseline state for other tests
-	*ProvisionAuthorizedUsers = ""
+	*provisionAuthorizedUsers = ""
 	Init()
 
-	// By default no users are allowed in
 	if Authorized(&redUser) {
 		t.Errorf("user should not be authorized")
 	}

@@ -27,8 +27,8 @@ import (
 
 var (
 	//FIXME: _ or -, docstrings
-	provisionerType = flag.String("provisioner_type", "noop", "")
-	ProvisionerTimeout = flag.Duration("provisioner_timeout", time.Duration(5 * time.Minute), "")
+	provisionerType = flag.String("provision_type", "noop", "")
+	ProvisionerTimeout = flag.Duration("provision_timeout", time.Duration(5 * time.Minute), "")
 )
 
 /*

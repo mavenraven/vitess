@@ -19,10 +19,10 @@ var (
 	)
 
 	//FIXME: docstrings
-	provisionGrpcEndpoint = flag.String("provisioner_grpc_endpoint", "", "")
-	provisionGrpcDialTimeout = flag.Duration("provisioner_grpc_dial_timeout", time.Duration(5 * time.Second), "")
-	provisionGrpcRequestTimeout = flag.Duration("provisioner_grpc_per_retry_timeout", time.Duration(5 * time.Second), "")
-	provisionGrpcMaxRetries = flag.Uint("provisioner_grpc_max_retries", 3, "")
+	provisionGrpcEndpoint = flag.String("provision_grpc_endpoint", "", "")
+	provisionGrpcDialTimeout = flag.Duration("provision_grpc_dial_timeout", time.Duration(5 * time.Second), "")
+	provisionGrpcRequestTimeout = flag.Duration("provision_grpc_per_retry_timeout", time.Duration(5 * time.Second), "")
+	provisionGrpcMaxRetries = flag.Uint("provision_grpc_max_retries", 3, "")
 
 
 )

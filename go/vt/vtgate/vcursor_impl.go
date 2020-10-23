@@ -24,7 +24,8 @@ import (
 	"sync/atomic"
 	"time"
 	"vitess.io/vitess/go/vt/provision"
-	"vitess.io/vitess/go/vt/vtgate/provisionacl"
+	"vitess.io/vitess/go/vt/vtgate/provisioncreateacl"
+	"vitess.io/vitess/go/vt/vtgate/provisiondeleteacl"
 
 	"vitess.io/vitess/go/mysql"
 
@@ -138,9 +139,9 @@ func (vc *vcursorImpl) ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL
 }
 
 func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) error {
-	allowed := provisionacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
+	allowed := provisioncreateacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
 	if !allowed {
-		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision operations")
+		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision create operations")
 	}
 
 	keyspaceExists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
@@ -188,9 +189,9 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 }
 
 func (vc *vcursorImpl) ExecuteDeleteKeyspace(keyspace string, ifExists bool) error {
-	allowed := provisionacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
+	allowed := provisiondeleteacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
 	if !allowed {
-		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision operations")
+		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision delete operations")
 	}
 
 	keyspaceExists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)

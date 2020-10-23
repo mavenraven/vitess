@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provisionacl
+package provisiondeleteacl
 
 import (
 	"flag"
@@ -24,35 +24,33 @@ import (
 )
 
 var (
-	// ProvisionAuthorizedUsers specifies the users that can do provisioning operations via DDL.
-	ProvisionAuthorizedUsers = flag.String("provisioner_authorized_users", "", "List of users authorized to run provisioning operations via DDL, or '%' to allow all users.")
+	provisionAuthorizedUsers = flag.String(
+		"provision_delete_keyspace_authorized_users",
+		"",
+		"List of users authorized to delete keyspaces via `DROP DATABASE <keyspace>`, or '%' to allow all users.",
+	)
 
-	// allowAll is true if the special value of "*" was specified
 	allowAll bool
-
-	// aCL contains a set of allowed usernames
 	acl map[string]struct{}
 )
 
-// Init parses the users option and sets allowAll / acl accordingly
 func Init() {
 	acl = make(map[string]struct{})
 	allowAll = false
 
-	if *ProvisionAuthorizedUsers == "%" {
+	if *provisionAuthorizedUsers == "%" {
 		allowAll = true
 		return
-	} else if *ProvisionAuthorizedUsers == "" {
+	} else if *provisionAuthorizedUsers == "" {
 		return
 	}
 
-	for _, user := range strings.Split(*ProvisionAuthorizedUsers, ",") {
+	for _, user := range strings.Split(*provisionAuthorizedUsers, ",") {
 		user = strings.TrimSpace(user)
 		acl[user] = struct{}{}
 	}
 }
 
-// Authorized returns true if the given caller is allowed to execute vschema operations
 func Authorized(caller *querypb.VTGateCallerID) bool {
 	if allowAll {
 		return true

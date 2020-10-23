@@ -62,19 +62,21 @@ func TestMain(m *testing.M) {
 		clusterForProvisionTest = cluster.NewCluster(cell, hostname)
 		//FIXME: underscores or dashes
 		clusterForProvisionTest.VtGateExtraArgs = []string {
-			"-provisioner_authorized_users",
+			"-provision_create_keyspace_authorized_users",
 			"%",
-			"-provisioner_type",
-			"grpc",
-			"-provisioner_timeout",
+			"-provision_delete_keyspace_authorized_users",
+			"%",
+			"-provision_timeout",
 			"30s",
-			"-provisioner_grpc_endpoint",
+			"-provision_type",
+			"grpc",
+			"-provision_grpc_endpoint",
 			listener.Addr().String(),
-			"-provisioner_grpc_dial_timeout",
+			"-provision_grpc_dial_timeout",
 			"1s",
-			"-provisioner_grpc_per_retry_timeout",
+			"-provision_grpc_per_retry_timeout",
 			"1s",
-			"-provisioner_grpc_max_retries",
+			"-provision_grpc_max_retries",
 			"1",
 		}
 
