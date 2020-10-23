@@ -1,14 +1,24 @@
 package provision
 
-type factory = func(map[string]string) (Provisioner, error)
-var (
-	provisioners = make(map[string]factory)
+import (
+	"vitess.io/vitess/go/vt/log"
+	vtrpcpb "vitess.io/vitess/go/vt/proto/vtrpc"
+	"vitess.io/vitess/go/vt/vterrors"
 )
 
-func NewProvisioner(provisionerType string, config map[string]string) (Provisioner, error) {
-	f, ok := provisioners[provisionerType]
+var (
+	provisioners = make(map[string]Provisioner)
+)
+
+func factory(provisionerType string) Provisioner {
+	p, ok := provisioners[provisionerType]
 	if !ok {
-		return nil, ErrInvalidProvisionerType
+		log.Error(vterrors.Errorf(
+			vtrpcpb.Code_INVALID_ARGUMENT,
+			"failed to find %s provisioner, defaulting to noop",
+			provisionerType,
+			))
+		return noopProvisioner{}
 	}
-	return f(config)
+	return p
 }

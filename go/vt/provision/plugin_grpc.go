@@ -8,41 +8,35 @@ import (
 	"google.golang.org/grpc"
 	"time"
 	"vitess.io/vitess/go/vt/proto/provision"
+	vtrpcpb "vitess.io/vitess/go/vt/proto/vtrpc"
+	"vitess.io/vitess/go/vt/vterrors"
 )
 
+
 var (
-	errNeedGrpcEndpoint = fmt.Errorf("need grpc endpoint to use grpc provisioning")
-	//FIXME: underscores or dashes
-	provisionGrpcEndpoint = flag.String("provision_grpc_endpoint", "", "Endpoint for gRPC server.")
+	ErrNeedGrpcEndpoint = vterrors.Errorf(
+		vtrpcpb.Code_FAILED_PRECONDITION,
+		"need grpc endpoint to use grpc provisioning",
+	)
+
+	provisionGrpcEndpoint = flag.String("provisioner_grpc_endpoint", "", "")
+	provisionGrpcDialTimeout = flag.Duration("provisioner_grpc_dial_timeout", time.Duration(5 * time.Second), "")
+	provisionGrpcRequestTimeout = flag.Duration("provisioner_grpc_per_retry_timeout", time.Duration(5 * time.Second), "")
+	provisionGrpcMaxRetries = flag.Uint("provisioner_grpc_max_retries", 3, "")
 )
 type grpcProvisioner struct {}
 
-func newGRPCProvisioner(config map[string]string) (Provisioner, error){
-	//FIXME: skip this for now
-	/*
-	grpcEndpointConfig, ok := config[grpcEndpoint]
-	if !ok {
-		return nil, errNeedGrpcEndpoint
+func (p grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
+	if *provisionGrpcEndpoint == "" {
+		return ErrNeedGrpcEndpoint
 	}
-
-	if grpcEndpointConfig == "" {
-		return nil, errNeedGrpcEndpoint
-	}
-	 */
-
-	return &grpcProvisioner{}, nil
-}
-
-func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
-	//FIXME: cli option for endpont
-	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	dialTimeout, cancel := context.WithTimeout(ctx, *provisionGrpcDialTimeout)
 	defer cancel()
 
 	//FIXME: tls
 	conn, err := grpc.DialContext(dialTimeout, *provisionGrpcEndpoint, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		//FIXME: better error
-		fmt.Errorf("dialing to provisioner timed out")
+		vterrors.Wrapf(err, "dialing to provisioner timed out")
 	}
 	defer conn.Close()
 
@@ -54,10 +48,8 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 	_, err = client.RequestCreateKeyspace(
 		ctx,
 		req,
-		//FIXME: cli option
-		grpc_retry.WithPerRetryTimeout(5 * time.Second),
-		//FIXME: cli option
-		grpc_retry.WithMax(3),
+		grpc_retry.WithPerRetryTimeout(*provisionGrpcRequestTimeout),
+		grpc_retry.WithMax(*provisionGrpcMaxRetries),
 		grpc_retry.WithBackoff(
 			grpc_retry.BackoffLinear(1 * time.Second),
 		),
@@ -66,7 +58,7 @@ func (p *grpcProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace st
 	return err
 }
 
-func (p *grpcProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
+func (p grpcProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
 	//FIXME: cli option for endpont
 	dialTimeout, cancel := context.WithTimeout(ctx, 5 * time.Second)
 	defer cancel()
@@ -100,5 +92,5 @@ func (p *grpcProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace st
 }
 
 func init() {
-	provisioners["grpc"] = newGRPCProvisioner
+	provisioners["grpc"] = grpcProvisioner{}
 }

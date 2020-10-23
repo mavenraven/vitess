@@ -69,14 +69,20 @@ func TestMain(m *testing.M) {
 		}
 
 		clusterForProvisionTest = cluster.NewCluster(cell, hostname)
+		//FIXME: underscores or dashes
 		clusterForProvisionTest.VtGateExtraArgs = []string {
-			"-provision_authorized_users",
+			"-provisioner_authorized_users",
 			"%",
-			"-provision_type",
+			"-provisioner_type",
 			"grpc",
-			"-provision_grpc_endpoint",
+			"-provisioner_grpc_endpoint",
 			grpcServerAddress.String(),
-
+			"-provisioner_grpc_dial_timeout",
+			"1s",
+			"-provisioner_grpc_per_retry_timeout",
+			"1s",
+			"-provisioner_grpc_max_retries",
+			"1",
 		}
 
 		defer clusterForProvisionTest.Teardown()
@@ -110,7 +116,7 @@ func TestProvisionKeyspace(t *testing.T) {
 	qr, err := conn.ExecuteFetch(createStatement, 10, true)
 	require.Nil(t, err)
 
-	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
+	assert.Equal(t, uint64(1), qr.RowsAffected, "returned: %v", qr.Rows)
 
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
@@ -120,7 +126,7 @@ func TestProvisionKeyspace(t *testing.T) {
 	qr, err = conn.ExecuteFetch(dropStatement, 10, true)
 	require.Nil(t, err)
 
-	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
+	assert.Equal(t, uint64(1), qr.RowsAffected, "returned: %v", qr.Rows)
 
 	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace does return an error, we assume it's because the keyspace no longer exists, and not because of
@@ -132,7 +138,7 @@ type testGrpcServer struct {}
 
 func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provision.RequestCreateKeyspaceRequest) (*provision.ProvisionResponse, error) {
 	//We're doing this in a go routine to simulate the fact that RequestCreateKeyspace does not block while the
-	//the keyspace is being created.
+	//the keyspace is being created. We want to exercise the topo polling logic, so we use a large wait time.
 	go func() {
 		<- time.After(10 * time.Second)
 		err := clusterForProvisionTest.VtctlProcess.CreateKeyspace(rckr.Keyspace)
@@ -145,7 +151,7 @@ func (_ testGrpcServer)RequestCreateKeyspace(ctx context.Context, rckr *provisio
 
 func (_ testGrpcServer)RequestDeleteKeyspace(ctx context.Context, rckr *provision.RequestDeleteKeyspaceRequest) (*provision.ProvisionResponse, error) {
 	//We're doing this in a go routine to simulate the fact that RequestDeleteKeyspace does not block while the
-	//the keyspace is being deleted.
+	//the keyspace is being deleted. We want to exercise the topo polling logic, so we use a large wait time.
 	go func() {
 		<- time.After(10 * time.Second)
 		err := clusterForProvisionTest.VtctlProcess.DeleteKeyspace(rckr.Keyspace)

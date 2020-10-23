@@ -18,26 +18,26 @@ package provision
 
 import (
 	"context"
-	"fmt"
+	vtrpcpb "vitess.io/vitess/go/vt/proto/vtrpc"
+	"vitess.io/vitess/go/vt/vterrors"
 )
 
 type noopProvisioner struct{}
 
-func newNoopProvisioner(config map[string]string) (Provisioner, error){
-	return noopProvisioner{}, nil
-}
+var ErrNoopInUse = vterrors.Errorf(
+	vtrpcpb.Code_UNIMPLEMENTED,
+	"noop provisioner in use. select a different provisioner using vtgate flag -provisioner_type",
+)
 
 func (noopProvisioner) RequestCreateKeyspace(ctx context.Context, keyspace string) error {
-	//FIXME: better error
-	return fmt.Errorf("not implemented")
+	return ErrNoopInUse
 }
 
 func (noopProvisioner) RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
-	//FIXME: better error
-	return fmt.Errorf("not implemented")
+	return ErrNoopInUse
 }
 
 func init() {
-	provisioners["noop"] = newNoopProvisioner
+	provisioners["noop"] = noopProvisioner{}
 }
 

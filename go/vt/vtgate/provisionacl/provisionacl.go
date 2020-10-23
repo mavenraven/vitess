@@ -25,7 +25,7 @@ import (
 
 var (
 	// ProvisionAuthorizedUsers specifies the users that can do provisioning operations via DDL.
-	ProvisionAuthorizedUsers = flag.String("provision_authorized_users", "", "List of users authorized to run provisioning operations via DDL, or '%' to allow all users.")
+	ProvisionAuthorizedUsers = flag.String("provisioner_authorized_users", "", "List of users authorized to run provisioning operations via DDL, or '%' to allow all users.")
 
 	// allowAll is true if the special value of "*" was specified
 	allowAll bool

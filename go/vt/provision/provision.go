@@ -22,24 +22,16 @@ package provision
 import (
 	"context"
 	"flag"
-	"fmt"
-	"vitess.io/vitess/go/vt/log"
-	"vitess.io/vitess/go/vt/vterrors"
 )
 
 var (
 	//FIXME: _ or -
-	provisionerType = flag.String("provision_type", "noop", "Provisioner type to use")
-	//FIXME: better error types
-	ErrInvalidProvisionerType           = fmt.Errorf("provisionType not found")
-	ErrKeyspaceAlreadyExists            = fmt.Errorf("keyspace already exists")
-	ErrProvisionConnection              = fmt.Errorf("provisionerType not found")
-	flags                               = make (map[string]string)
+	provisionerType = flag.String("provisioner_type", "noop", "")
 )
 
 /*
 The contract for the methods of Provisioner is that they return nil if they have successfully received your request.
-The caller still needs to check with topo to see if your keyspace has been created or deleted.
+The caller still needs to check with topo to see if the keyspace has been created or deleted.
 The caller does not need to handle retries.
  */
 type Provisioner interface {
@@ -48,23 +40,9 @@ type Provisioner interface {
 }
 
 func RequestCreateKeyspace(ctx context.Context, keyspace string) error {
-	p, err := NewProvisioner(*provisionerType, flags)
-	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
-		p = noopProvisioner{}
-	}
-	return p.RequestCreateKeyspace(ctx, keyspace)
+	return factory(*provisionerType).RequestCreateKeyspace(ctx, keyspace)
 }
 
 func RequestDeleteKeyspace(ctx context.Context, keyspace string) error {
-	p, err := NewProvisioner(*provisionerType, flags)
-	if err != nil {
-		log.Error(vterrors.Wrapf(err, "failed to find %s provisioner, defaulting to noop", *provisionerType))
-		p = noopProvisioner{}
-	}
-	return p.RequestDeleteKeyspace(ctx, keyspace)
+	return factory(*provisionerType).RequestDeleteKeyspace(ctx, keyspace)
 }
-
-func init() {
-}
-
