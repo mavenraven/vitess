@@ -25,20 +25,20 @@ import (
 	"vitess.io/vitess/go/vt/vterrors"
 )
 
-var _ Primitive = (*CreateKeyspace)(nil)
+var _ Primitive = (*DeleteKeyspace)(nil)
 
-//CreateKeyspace represents the instructions to create a new keyspace via the user issuing a "CREATE DATABASE" type
+//DeleteKeyspace represents the instructions to delete keyspace via the user issuing a "DROP DATABASE" type
 //statement. As the actual creation logic is outside of the scope of vitess, the request is submitted to a service.
-type CreateKeyspace struct {
-	Keyspace    string
-	IfNotExists bool
+type DeleteKeyspace struct {
+	Keyspace string
+	IfExists bool
 	noTxNeeded
 	noInputs
 }
 
-func (v *CreateKeyspace) description() PrimitiveDescription {
+func (v *DeleteKeyspace) description() PrimitiveDescription {
 	return PrimitiveDescription{
-		OperatorType: "CreateKeyspace",
+		OperatorType: "DeleteKeyspace",
 		Keyspace:     nil,
 		Other: map[string]interface{}{
 			"keyspace": v.Keyspace,
@@ -47,23 +47,23 @@ func (v *CreateKeyspace) description() PrimitiveDescription {
 }
 
 //RouteType implements the Primitive interface
-func (v *CreateKeyspace) RouteType() string {
-	return "CreateKeyspace"
+func (v *DeleteKeyspace) RouteType() string {
+	return "DeleteKeyspace"
 }
 
 //GetKeyspaceName implements the Primitive interface
-func (v *CreateKeyspace) GetKeyspaceName() string {
+func (v *DeleteKeyspace) GetKeyspaceName() string {
 	return "" // FIXME: david - don't think this is reachable in a way that makes sense
 }
 
 //GetTableName implements the Primitive interface
-func (v *CreateKeyspace) GetTableName() string {
+func (v *DeleteKeyspace) GetTableName() string {
 	return "" // FIXME: david - don't this is reachable in a way that makes sense
 }
 
 //Execute implements the Primitive interface
-func (v *CreateKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
-	err = vcursor.ExecuteCreateKeyspace(v.Keyspace, v.IfNotExists)
+func (v *DeleteKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantfields bool) (result *sqltypes.Result, err error) {
+	err = vcursor.ExecuteCreateKeyspace(v.Keyspace, v.IfExists)
 	if err != nil {
 		log.Error(err)
 		return result, err
@@ -78,11 +78,11 @@ func (v *CreateKeyspace) Execute(vcursor VCursor, bindVars map[string]*query.Bin
 }
 
 //StreamExecute implements the Primitive interface
-func (v *CreateKeyspace) StreamExecute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantields bool, callback func(*sqltypes.Result) error) error {
+func (v *DeleteKeyspace) StreamExecute(vcursor VCursor, bindVars map[string]*query.BindVariable, wantields bool, callback func(*sqltypes.Result) error) error {
 	return vterrors.Errorf(vtrpcpb.Code_INTERNAL, "not reachable") // FIXME: david - copied from online_ddl.go, also have no idea if this should work
 }
 
 //GetFields implements the Primitive interface
-func (v *CreateKeyspace) GetFields(vcursor VCursor, bindVars map[string]*query.BindVariable) (*sqltypes.Result, error) {
+func (v *DeleteKeyspace) GetFields(vcursor VCursor, bindVars map[string]*query.BindVariable) (*sqltypes.Result, error) {
 	return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "not reachable") // FIXME: david - copied from online_ddl.go, also have no idea if this should work
 }

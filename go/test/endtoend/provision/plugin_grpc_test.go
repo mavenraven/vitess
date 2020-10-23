@@ -19,6 +19,7 @@ package sequence
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -35,8 +36,8 @@ import (
 var (
 	clusterForProvisionTest *cluster.LocalProcessCluster
 	cell                    = "zone1"
-	cell2                   = "zone2"
 	hostname                = "localhost"
+	keyspace = "keyspace"
 )
 
 func TestMain(m *testing.M) {
@@ -105,30 +106,25 @@ func TestProvisionKeyspace(t *testing.T) {
 	conn, err := mysql.Connect(ctx, &vtParams)
 	require.Nil(t, err)
 
-//	createStatement := fmt.Sprintf("CREATE DATABSE %s", )
-
-
-	qr, err := conn.ExecuteFetch("CREATE DATABASE my_keyspace;", 10, true)
+	createStatement := fmt.Sprintf("CREATE DATABASE %s;", keyspace)
+	qr, err := conn.ExecuteFetch(createStatement, 10, true)
 	require.Nil(t, err)
 
 	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
 
-	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", "my_keyspace")
+	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
 
-	/*
-	qr, err := conn.ExecuteFetch("DELETE DATABASE my_keyspace;", 10, true)
+	dropStatement := fmt.Sprintf("DROP DATABASE %s;", keyspace)
+	qr, err = conn.ExecuteFetch(dropStatement, 10, true)
 	require.Nil(t, err)
 
 	assert.Equal(t, uint64(1), qr.RowsAffected, "got the following back from vtgate instead: %v", qr.Rows)
 
-	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", "my_keyspace")
+	_, err = clusterForProvisionTest.VtctlclientProcess.ExecuteCommandWithOutput("GetKeyspace", keyspace)
 	//If GetKeyspace doesn't return an error, the keyspace exists.
 	require.Nil(t, err)
-
-	 */
-
 }
 
 type testGrpcServer struct {}

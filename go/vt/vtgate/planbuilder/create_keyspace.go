@@ -6,7 +6,7 @@ import (
 
 func buildCreateKeyspacePlan(keyspaceName string, ifNotExists bool) engine.Primitive {
 	return &engine.CreateKeyspace{
-		RequestedKeyspace: keyspaceName,
+		Keyspace:    keyspaceName,
 		IfNotExists: ifNotExists,
 	}
 }

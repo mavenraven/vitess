@@ -143,6 +143,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	if !allowed {
 		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision operations")
 	}
+
 	keyspaceExists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
 	if err != nil {
 		return err
@@ -153,7 +154,7 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 	}
 
 	if keyspaceExists {
-		return vterrors.Errorf(vtrpcpb.Code_ALREADY_EXISTS, "keyspace %v already exists", keyspace)
+		return vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "keyspace %v already exists", keyspace)
 	}
 
 	err = provision.RequestCreateKeyspace(vc.ctx, keyspace)
@@ -182,6 +183,57 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 				return err
 			}
 			if exists {
+				return nil
+			}
+		}
+	}
+}
+
+func (vc *vcursorImpl) ExecuteDeleteKeyspace(keyspace string, ifExists bool) error {
+	allowed := provisionacl.Authorized(callerid.ImmediateCallerIDFromContext(vc.ctx))
+	if !allowed {
+		return vterrors.Errorf(vtrpcpb.Code_PERMISSION_DENIED, "not authorized to perform provision operations")
+	}
+
+	keyspaceExists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
+	if err != nil {
+		return err
+	}
+
+	if !keyspaceExists && ifExists {
+		return nil
+	}
+
+	if !keyspaceExists {
+		return vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "keyspace %v does not exist", keyspace)
+	}
+
+	err = provision.RequestDeleteKeyspace(vc.ctx, keyspace)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <- vc.ctx.Done():
+			return vterrors.Errorf(
+				vtrpcpb.Code_ABORTED,
+				"waiting for provisioning of keyspace %v cancelled. provisioning will continue in the background.",
+				keyspace,
+			)
+		//FIXME: make configurable
+		case <-time.After(30 * time.Second):
+			return vterrors.Errorf(
+				vtrpcpb.Code_DEADLINE_EXCEEDED,
+				"waiting for provisioning of keyspace %v timed out. provisioning will continue in the background.",
+				keyspace,
+			)
+		case <-time.After(5 * time.Second):
+			exists, err := vc.topoServer.KeyspaceExists(vc.ctx, keyspace)
+			if err != nil {
+				return err
+			}
+			if !exists {
 				return nil
 			}
 		}
