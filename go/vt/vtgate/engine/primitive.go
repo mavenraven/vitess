@@ -83,6 +83,8 @@ type (
 		ResolveDestinations(keyspace string, ids []*querypb.Value, destinations []key.Destination) ([]*srvtopo.ResolvedShard, [][]*querypb.Value, error)
 
 		ExecuteVSchema(keyspace string, vschemaDDL *sqlparser.DDL) error
+		ExecuteCreateKeyspace(keyspace string, ifNotExists bool) error
+		ExecuteDeleteKeyspace(keyspace string, ifExists bool) error
 
 		SubmitOnlineDDL(onlineDDl *schema.OnlineDDL) error
 

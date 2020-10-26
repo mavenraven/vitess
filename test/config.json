@@ -597,6 +597,15 @@
 			"Shard": 22,
 			"RetryMax": 0,
 			"Tags": []
+		},
+		"provision": {
+			"File": "unused.go",
+			"Args": ["vitess.io/vitess/go/test/endtoend/provision"],
+			"Command": [],
+			"Manual": false,
+			"Shard": 28,
+			"RetryMax": 0,
+			"Tags": []
 		}
 	}
 }
