@@ -406,3 +406,12 @@ message CellsAlias {
   // Cells that map to this alias
   repeated string cells = 2;
 }
+
+message ProvisionRequest {
+  string keyspace = 1;
+  Operation operation = 2;
+}
+enum Operation {
+  CREATE = 0;
+  DELETE = 1;
+}

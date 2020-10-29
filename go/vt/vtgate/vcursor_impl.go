@@ -157,7 +157,12 @@ func (vc *vcursorImpl) ExecuteCreateKeyspace(keyspace string, ifNotExists bool) 
 		return vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "keyspace %v already exists", keyspace)
 	}
 
-	err = provision.RequestCreateKeyspace(vc.ctx, keyspace)
+
+	err = vc.topoServer.CreateProvisionRequest(vc.ctx, &topodatapb.ProvisionRequest{
+		Keyspace:             keyspace,
+		Operation:            topodatapb.Operation_CREATE,
+	})
+
 	if err != nil {
 		return err
 	}

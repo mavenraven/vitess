@@ -18,6 +18,7 @@ package topo
 
 import (
 	"path"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
@@ -149,6 +150,25 @@ func (ki *KeyspaceInfo) ComputeCellServedFrom(cell string) []*topodatapb.SrvKeys
 	}
 	return result
 }
+
+// CreateKeyspace wraps the underlying Conn.Create
+// and dispatches the event.
+func (ts *Server) CreateProvisionRequest(ctx context.Context, value *topodatapb.ProvisionRequest) error {
+	data, err := proto.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	provisionPath := path.Join(ProvisionRequests, string(time.Now().Unix()), ProvisionRequestsFile)
+	if _, err := ts.globalCell.Create(ctx, provisionPath, data); err != nil {
+		return err
+	}
+
+	//FIXME: add event
+	return nil
+}
+
+func ()
 
 // CreateKeyspace wraps the underlying Conn.Create
 // and dispatches the event.
