@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -153,14 +154,16 @@ func TestCanVtGateExecute(t *testing.T) {
 	client, err := vtctlclient.New(fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()))
 	assert.NoError(t, err)
 	fmt.Printf("WOW port %v\n", cluster.GrpcPort())
-	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"VtGateExecute", "-server", fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()), "select 1;"}, 10 * time.Second)
+	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"VtGateExecute", "-server", fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()), "select 'success';"}, 10 * time.Second)
 	assert.NoError(t, err)
+	var b strings.Builder
+	b.Grow(1024)
 OUT:
 	for {
 		e, err := stream.Recv()
 		switch err {
 		case nil:
-			fmt.Printf("%v", e)
+			fmt.Fprintf(&b,"%v", e.Value)
 		case io.EOF:
 			fmt.Println("done")
 			break OUT
@@ -168,6 +171,8 @@ OUT:
 			fmt.Errorf("remote error: %v", err)
 		}
 	}
+	fmt.Printf("WOW %v\n", b.String())
+	assert.Fail(t, "bye")
 }
 
 func startCluster(flags ...string) (vttest.LocalCluster, error) {
