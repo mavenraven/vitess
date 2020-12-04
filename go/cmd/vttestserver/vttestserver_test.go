@@ -153,7 +153,7 @@ func TestCanVtGateExecute(t *testing.T) {
 	client, err := vtctlclient.New(fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()))
 	assert.NoError(t, err)
 	fmt.Printf("WOW port %v\n", cluster.GrpcPort())
-	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"GetCellInfoNames"}, 10 * time.Second)
+	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"VtGateExecute", "-server", fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()), "select 1;"}, 10 * time.Second)
 	assert.NoError(t, err)
 OUT:
 	for {
