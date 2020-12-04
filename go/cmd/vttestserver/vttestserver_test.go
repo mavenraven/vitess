@@ -155,7 +155,7 @@ func TestCanVtGateExecute(t *testing.T) {
 	assert.NoError(t, err)
 
 	stream, err := client.ExecuteVtctlCommand(
-		context.TODO(),
+		context.Background(),
 		[]string{
 			"VtGateExecute",
 			"-server",
