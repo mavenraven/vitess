@@ -149,26 +149,36 @@ func TestMtlsAuthUnaothorizedFails(t *testing.T) {
 func TestCanVtGateExecute(t *testing.T) {
 	cluster, err := startCluster()
 	defer cluster.TearDown()
+	assert.NoError(t, err)
 
+	client, err := vtctlclient.New(fmt.Sprintf("localhost:%v", cluster.GrpcPort()))
 	assert.NoError(t, err)
-	client, err := vtctlclient.New(fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()))
+
+	stream, err := client.ExecuteVtctlCommand(
+		context.TODO(),
+		[]string{
+			"VtGateExecute",
+			"-server",
+			fmt.Sprintf("localhost:%v", cluster.GrpcPort()),
+			"select 'success';",
+		},
+		10 * time.Second,
+	)
 	assert.NoError(t, err)
-	fmt.Printf("WOW port %v\n", cluster.GrpcPort())
-	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"VtGateExecute", "-server", fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()), "select 'success';"}, 10 * time.Second)
-	assert.NoError(t, err)
+
 	var b strings.Builder
 	b.Grow(1024)
+
 OUT:
 	for {
 		e, err := stream.Recv()
 		switch err {
 		case nil:
-			fmt.Fprintf(&b,"%v", e.Value)
+			b.WriteString(e.Value)
 		case io.EOF:
-			fmt.Println("done")
 			break OUT
 		default:
-			fmt.Errorf("remote error: %v", err)
+			assert.Fail(t, fmt.Errorf("remote error: %v", err).Error())
 		}
 	}
 	assert.Contains(t, b.String(), "success")
