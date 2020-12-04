@@ -171,8 +171,7 @@ OUT:
 			fmt.Errorf("remote error: %v", err)
 		}
 	}
-	fmt.Printf("WOW %v\n", b.String())
-	assert.Fail(t, "bye")
+	assert.Contains(t, b.String(), "success")
 }
 
 func startCluster(flags ...string) (vttest.LocalCluster, error) {
