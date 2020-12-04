@@ -19,5 +19,23 @@ package main
 // Imports and register the gRPC vtgateservice server
 
 import (
+	"fmt"
+	"os"
+	vtgateservicepb "vitess.io/vitess/go/vt/proto/vtgateservice"
+	"vitess.io/vitess/go/vt/servenv"
+	"vitess.io/vitess/go/vt/vtgate"
+	"vitess.io/vitess/go/vt/vtgate/grpcvtgateservice"
 	_ "vitess.io/vitess/go/vt/vtgate/grpcvtgateservice"
+	"vitess.io/vitess/go/vt/vtgate/vtgateservice"
 )
+
+func init() {
+	fmt.Printf("WOW init for pid %v", os.Getpid())
+	vtgate.RegisterVTGates = append(vtgate.RegisterVTGates, func(vtGate vtgateservice.VTGateService) {
+		if servenv.GRPCCheckServiceMap("vtgateservice") {
+			fmt.Printf("WOW registering vtgateservice for pid %v", os.Getpid())
+			vtgateservicepb.RegisterVitessServer(servenv.GRPCServer, grpcvtgateservice.NewVTGate(vtGate))
+		}
+	})
+
+}

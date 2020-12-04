@@ -51,6 +51,11 @@ var (
 )
 
 // VTGate is the public structure that is exported via gRPC
+
+func NewVTGate(server vtgateservice.VTGateService) *VTGate{
+	return &VTGate{server: server}
+}
+
 type VTGate struct {
 	server vtgateservice.VTGateService
 }

@@ -19,6 +19,8 @@ package grpcvtgateconn
 
 import (
 	"flag"
+	"fmt"
+	"os"
 
 	"google.golang.org/grpc"
 
@@ -44,6 +46,7 @@ var (
 )
 
 func init() {
+	fmt.Printf("WOW I INITED MY grpcvtgateconn, pid %v\n", os.Getpid())
 	vtgateconn.RegisterDialer("grpc", dial)
 }
 

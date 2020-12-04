@@ -34,5 +34,6 @@ vtctld \
  -log_dir $VTDATAROOT/tmp \
  -port $vtctld_web_port \
  -grpc_port $grpc_port \
+ -enable_queries \
  -pid_file $VTDATAROOT/tmp/vtctld.pid \
   > $VTDATAROOT/tmp/vtctld.out 2>&1 &
