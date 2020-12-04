@@ -19,6 +19,7 @@ package vtgateconn
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"golang.org/x/net/context"
 	"vitess.io/vitess/go/sqltypes"
@@ -156,6 +157,7 @@ func RegisterDialer(name string, dialer DialerFunc) {
 
 // DialProtocol dials a specific protocol, and returns the *VTGateConn
 func DialProtocol(ctx context.Context, protocol string, address string) (*VTGateConn, error) {
+	fmt.Printf("WOW DIALIEZER %v for pid %v\n",dialers, os.Getpid())
 	dialer, ok := dialers[protocol]
 	if !ok {
 		return nil, fmt.Errorf("no dialer registered for VTGate protocol %s", protocol)

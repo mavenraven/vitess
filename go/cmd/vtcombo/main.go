@@ -23,6 +23,7 @@ package main
 
 import (
 	"flag"
+	"google.golang.org/grpc/grpclog"
 	"os"
 	"strings"
 	"time"
@@ -104,6 +105,7 @@ func startMysqld(uid uint32) (*mysqlctl.Mysqld, *mysqlctl.Mycnf) {
 }
 
 func main() {
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stdout))
 	defer exit.Recover()
 
 	// flag parsing
