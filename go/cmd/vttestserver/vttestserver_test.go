@@ -19,10 +19,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"vitess.io/vitess/go/vt/tlstest"
 
@@ -141,6 +143,31 @@ func TestMtlsAuthUnaothorizedFails(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "code = Unauthenticated desc = client certificate not authorized")
+}
+
+func TestCanVtGateExecute(t *testing.T) {
+	cluster, err := startCluster()
+	defer cluster.TearDown()
+
+	assert.NoError(t, err)
+	client, err := vtctlclient.New(fmt.Sprintf("127.0.0.1:%v", cluster.GrpcPort()))
+	assert.NoError(t, err)
+	fmt.Printf("WOW port %v\n", cluster.GrpcPort())
+	stream, err := client.ExecuteVtctlCommand(context.TODO(), []string{"GetCellInfoNames"}, 10 * time.Second)
+	assert.NoError(t, err)
+OUT:
+	for {
+		e, err := stream.Recv()
+		switch err {
+		case nil:
+			fmt.Printf("%v", e)
+		case io.EOF:
+			fmt.Println("done")
+			break OUT
+		default:
+			fmt.Errorf("remote error: %v", err)
+		}
+	}
 }
 
 func startCluster(flags ...string) (vttest.LocalCluster, error) {
